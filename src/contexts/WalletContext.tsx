@@ -11,19 +11,20 @@ interface WalletContextData {
   earnings: Earnings;
   isBalanceVisible: boolean;
   toggleBalanceVisibility: () => void;
-  addTransaction: (transaction: Omit<Transaction, 'id' | 'date'>) => void;
+  addTransaction: (transaction: Omit<Transaction, 'id' | 'date'>) => Promise<void>;
   withdraw: (amount: number, pixKey: string) => Promise<boolean>;
   getFilteredTransactions: (type?: string) => Transaction[];
+  getTransactionById: (id: string) => Transaction | undefined;
   loading: boolean;
 }
 
 const WalletContext = createContext<WalletContextData>({} as WalletContextData);
 
-// Chaves para o AsyncStorage
 const STORAGE_KEYS = {
   BALANCE: '@entregador:wallet:balance',
   TRANSACTIONS: '@entregador:wallet:transactions',
   EARNINGS: '@entregador:wallet:earnings',
+  PROCESSED_DELIVERIES: '@entregador:wallet:processedDeliveries',
 };
 
 export const WalletProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
@@ -32,6 +33,7 @@ export const WalletProvider: React.FC<{ children: React.ReactNode }> = ({ childr
   const [earnings, setEarnings] = useState<Earnings>(mockEarnings);
   const [isBalanceVisible, setIsBalanceVisible] = useState(true);
   const [loading, setLoading] = useState(true);
+  const [processedDeliveries, setProcessedDeliveries] = useState<Set<string>>(new Set());
 
   const { deliveries } = useDelivery();
 
@@ -40,13 +42,13 @@ export const WalletProvider: React.FC<{ children: React.ReactNode }> = ({ childr
     loadStoredData();
   }, []);
 
-  // Função para carregar dados do AsyncStorage
   const loadStoredData = async () => {
     try {
-      const [storedBalance, storedTransactions, storedEarnings] = await Promise.all([
+      const [storedBalance, storedTransactions, storedEarnings, storedProcessed] = await Promise.all([
         AsyncStorage.getItem(STORAGE_KEYS.BALANCE),
         AsyncStorage.getItem(STORAGE_KEYS.TRANSACTIONS),
         AsyncStorage.getItem(STORAGE_KEYS.EARNINGS),
+        AsyncStorage.getItem(STORAGE_KEYS.PROCESSED_DELIVERIES),
       ]);
 
       if (storedBalance) {
@@ -54,11 +56,20 @@ export const WalletProvider: React.FC<{ children: React.ReactNode }> = ({ childr
       }
 
       if (storedTransactions) {
-        setTransactions(JSON.parse(storedTransactions));
+        const parsed = JSON.parse(storedTransactions);
+        const withDates = parsed.map((t: any) => ({
+          ...t,
+          date: new Date(t.date),
+        }));
+        setTransactions(withDates);
       }
 
       if (storedEarnings) {
         setEarnings(JSON.parse(storedEarnings));
+      }
+
+      if (storedProcessed) {
+        setProcessedDeliveries(new Set(JSON.parse(storedProcessed)));
       }
     } catch (error) {
       console.error('Erro ao carregar dados da carteira:', error);
@@ -67,7 +78,6 @@ export const WalletProvider: React.FC<{ children: React.ReactNode }> = ({ childr
     }
   };
 
-  // Função para salvar saldo
   const saveBalance = async (newBalance: WalletBalance) => {
     try {
       await AsyncStorage.setItem(STORAGE_KEYS.BALANCE, JSON.stringify(newBalance));
@@ -77,7 +87,6 @@ export const WalletProvider: React.FC<{ children: React.ReactNode }> = ({ childr
     }
   };
 
-  // Função para salvar transações
   const saveTransactions = async (newTransactions: Transaction[]) => {
     try {
       await AsyncStorage.setItem(STORAGE_KEYS.TRANSACTIONS, JSON.stringify(newTransactions));
@@ -87,7 +96,6 @@ export const WalletProvider: React.FC<{ children: React.ReactNode }> = ({ childr
     }
   };
 
-  // Função para salvar ganhos
   const saveEarnings = async (newEarnings: Earnings) => {
     try {
       await AsyncStorage.setItem(STORAGE_KEYS.EARNINGS, JSON.stringify(newEarnings));
@@ -97,13 +105,51 @@ export const WalletProvider: React.FC<{ children: React.ReactNode }> = ({ childr
     }
   };
 
-  // Atualiza ganhos quando houver entregas concluídas
+  const saveProcessedDeliveries = async (processed: Set<string>) => {
+    try {
+      await AsyncStorage.setItem(
+        STORAGE_KEYS.PROCESSED_DELIVERIES,
+        JSON.stringify(Array.from(processed))
+      );
+      setProcessedDeliveries(processed);
+    } catch (error) {
+      console.error('Erro ao salvar deliveries processadas:', error);
+    }
+  };
+
+  // ✅ MONITORA ENTREGAS CONCLUÍDAS E CRIA TRANSAÇÕES AUTOMATICAMENTE
   useEffect(() => {
-    if (loading) return; // Não atualiza durante o carregamento inicial
+    if (loading) return;
 
     const completedDeliveries = deliveries.filter(d => d.status === 'entregue');
-    
-    // Calcula ganhos do dia
+
+    completedDeliveries.forEach(async (delivery) => {
+      if (processedDeliveries.has(delivery.id)) {
+        return;
+      }
+
+      // Cria transação automaticamente
+      const newTransaction: Transaction = {
+        id: `tx_${delivery.id}_${Date.now()}`,
+        type: 'entrega',
+        amount: delivery.deliveryFee,
+        description: `Entrega #${delivery.orderId} - ${delivery.customer.name}`,
+        date: delivery.deliveredAt || new Date(),
+        status: 'concluido',
+        deliveryId: delivery.id,
+      };
+
+      const updatedTransactions = [newTransaction, ...transactions];
+      await saveTransactions(updatedTransactions);
+
+      const newProcessed = new Set(processedDeliveries);
+      newProcessed.add(delivery.id);
+      await saveProcessedDeliveries(newProcessed);
+
+      console.log('✅ Transação criada automaticamente:', newTransaction.id);
+    });
+
+    // Atualiza ganhos
     const today = new Date();
     const todayDeliveries = completedDeliveries.filter(d => {
       if (!d.deliveredAt) return false;
@@ -113,7 +159,6 @@ export const WalletProvider: React.FC<{ children: React.ReactNode }> = ({ childr
 
     const todayEarnings = todayDeliveries.reduce((sum, d) => sum + d.deliveryFee, 0);
 
-    // Atualiza earnings
     const newEarnings: Earnings = {
       ...earnings,
       today: todayEarnings,
@@ -124,87 +169,77 @@ export const WalletProvider: React.FC<{ children: React.ReactNode }> = ({ childr
 
     // Atualiza saldo disponível
     const totalEarnings = completedDeliveries.reduce((sum, d) => sum + d.deliveryFee, 0);
+    const withdrawnAmount = transactions
+      .filter(t => t.type === 'saque' && t.status === 'concluido')
+      .reduce((sum, t) => sum + Math.abs(t.amount), 0);
+
     const newBalance: WalletBalance = {
-      ...balance,
-      available: balance.available + (totalEarnings - earnings.today),
-      total: balance.total + (totalEarnings - earnings.today),
+      available: totalEarnings - withdrawnAmount,
+      pending: 0,
+      total: totalEarnings - withdrawnAmount,
     };
     saveBalance(newBalance);
-  }, [deliveries]);
+  }, [deliveries, loading]);
 
   const toggleBalanceVisibility = useCallback(() => {
     setIsBalanceVisible(prev => !prev);
   }, []);
 
-  const addTransaction = useCallback((transaction: Omit<Transaction, 'id' | 'date'>) => {
+  const addTransaction = useCallback(async (transaction: Omit<Transaction, 'id' | 'date'>) => {
     const newTransaction: Transaction = {
       ...transaction,
-      id: Date.now().toString(),
+      id: `tx_${Date.now()}`,
       date: new Date(),
     };
 
     const updatedTransactions = [newTransaction, ...transactions];
-    saveTransactions(updatedTransactions);
+    await saveTransactions(updatedTransactions);
 
-    // Atualiza saldo se a transação for concluída
     if (transaction.status === 'concluido') {
       const newBalance: WalletBalance = {
         ...balance,
         available: balance.available + transaction.amount,
         total: balance.total + transaction.amount,
       };
-      saveBalance(newBalance);
+      await saveBalance(newBalance);
     }
   }, [transactions, balance]);
 
   const withdraw = useCallback(async (amount: number, pixKey: string) => {
     try {
-      // Simula chamada de API
       await new Promise(resolve => setTimeout(resolve, 1500));
 
-      // Valida saldo
       if (amount > balance.available) {
         return false;
       }
 
-      // Valida valor mínimo
       if (amount < 10) {
         return false;
       }
 
-      // Cria transação de saque
-      const newTransaction: Transaction = {
+      await addTransaction({
         type: 'saque',
         amount: -amount,
         description: `Saque via PIX - ${pixKey}`,
         status: 'concluido',
-        id: Date.now().toString(),
-        date: new Date(),
-      };
-
-      const updatedTransactions = [newTransaction, ...transactions];
-      await saveTransactions(updatedTransactions);
-
-      // Atualiza saldo
-      const newBalance: WalletBalance = {
-        ...balance,
-        available: balance.available - amount,
-        total: balance.total - amount,
-      };
-      await saveBalance(newBalance);
+      });
 
       return true;
     } catch (error) {
       console.error('Erro ao realizar saque:', error);
       return false;
     }
-  }, [balance, transactions]);
+  }, [balance, addTransaction]);
 
   const getFilteredTransactions = useCallback((type?: string) => {
     if (!type || type === 'todas') {
       return transactions;
     }
     return transactions.filter(t => t.type === type);
+  }, [transactions]);
+
+  const getTransactionById = useCallback((id: string) => {
+    return transactions.find(t => t.id === id);
   }, [transactions]);
 
   return (
@@ -218,6 +253,7 @@ export const WalletProvider: React.FC<{ children: React.ReactNode }> = ({ childr
         addTransaction,
         withdraw,
         getFilteredTransactions,
+        getTransactionById,
         loading,
       }}
     >

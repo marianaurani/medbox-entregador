@@ -5,12 +5,14 @@ import WalletScreen from '../screens/wallet/WalletScreen';
 import TransactionsScreen from '../screens/wallet/TransactionsScreen';
 import WithdrawScreen from '../screens/wallet/WithdrawScreen';
 import WalletSettingsScreen from '../screens/wallet/WalletSettingsScreen';
+import TransactionDetailsScreen from '../screens/wallet/TransactionDetailsScreen';
 
 export type WalletStackParamList = {
   WalletHome: undefined;
   Transactions: undefined;
   Withdraw: undefined;
   WalletSettings: undefined;
+  TransactionDetails: { transactionId: string }; // ✅ NOVO
 };
 
 const Stack = createNativeStackNavigator<WalletStackParamList>();
@@ -37,6 +39,11 @@ export const WalletNavigator: React.FC = () => {
       <Stack.Screen 
         name="WalletSettings" 
         component={WalletSettingsScreen}
+      />
+      {/* ✅ NOVA ROTA */}
+      <Stack.Screen 
+        name="TransactionDetails" 
+        component={TransactionDetailsScreen}
       />
     </Stack.Navigator>
   );

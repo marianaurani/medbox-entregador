@@ -26,7 +26,6 @@ export const DeliveryProvider: React.FC<{ children: React.ReactNode }> = ({ chil
   const [deliveries, setDeliveries] = useState<Delivery[]>(mockDeliveries);
   const [loading, setLoading] = useState(true);
 
-  // Carregar entregas salvas ao iniciar
   useEffect(() => {
     loadDeliveries();
   }, []);
@@ -36,7 +35,6 @@ export const DeliveryProvider: React.FC<{ children: React.ReactNode }> = ({ chil
       const stored = await AsyncStorage.getItem(STORAGE_KEY);
       if (stored) {
         const parsedDeliveries = JSON.parse(stored);
-        // Reconverte as datas de string para Date
         const deliveriesWithDates = parsedDeliveries.map((d: any) => ({
           ...d,
           createdAt: d.createdAt ? new Date(d.createdAt) : new Date(),
@@ -117,17 +115,23 @@ export const DeliveryProvider: React.FC<{ children: React.ReactNode }> = ({ chil
         return false;
       }
 
-      const updatedDeliveries = deliveries.map(delivery =>
-        delivery.id === deliveryId
+      const delivery = deliveries.find(d => d.id === deliveryId);
+      if (!delivery) {
+        throw new Error('Entrega não encontrada');
+      }
+
+      const updatedDeliveries = deliveries.map(d =>
+        d.id === deliveryId
           ? {
-              ...delivery,
+              ...d,
               status: 'entregue' as const,
               deliveredAt: new Date(),
             }
-          : delivery
+          : d
       );
 
       await saveDeliveries(updatedDeliveries);
+      
       return true;
     } catch (error) {
       console.error('Erro ao finalizar entrega:', error);
@@ -156,7 +160,6 @@ export const DeliveryProvider: React.FC<{ children: React.ReactNode }> = ({ chil
     return deliveries.filter(d => d.status === 'entregue');
   }, [deliveries]);
 
-  // ✅ NOVA FUNÇÃO: Adicionar um pedido novo
   const addNewDelivery = useCallback(async (delivery: Delivery) => {
     try {
       const updatedDeliveries = [delivery, ...deliveries];
@@ -168,7 +171,6 @@ export const DeliveryProvider: React.FC<{ children: React.ReactNode }> = ({ chil
     }
   }, [deliveries]);
 
-  // ✅ NOVA FUNÇÃO: Adicionar vários pedidos de uma vez
   const addMultipleDeliveries = useCallback(async (newDeliveries: Delivery[]) => {
     try {
       const updatedDeliveries = [...newDeliveries, ...deliveries];

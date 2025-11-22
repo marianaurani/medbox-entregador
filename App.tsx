@@ -7,24 +7,24 @@ import { WalletProvider } from './src/contexts/WalletContext';
 import { BankProvider } from './src/contexts/BankContext';
 import { RootNavigator } from './src/navigation/RootNavigator';
 import AutoDeliveryGenerator from './src/components/AutoDeliveryGenerator';
-import AsyncStorage from '@react-native-async-storage/async-storage';
-import { useEffect } from 'react';
+// import AsyncStorage from '@react-native-async-storage/async-storage';
+// import { useEffect } from 'react';
 
 // App.tsx
 export default function App() {
-  useEffect(() => {
-  const clearOldDeliveries = async () => {
-    try {
-      // Limpa apenas os pedidos salvos (mantém usuário, carteira, etc)
-      await AsyncStorage.removeItem('@entregador:deliveries');
-      console.log('✅ Pedidos antigos limpos! Os novos pedidos terão IDs corretos.');
-    } catch (error) {
-      console.error('Erro ao limpar pedidos:', error);
-    }
-  };
+  // useEffect(() => {
+  // const clearOldDeliveries = async () => {
+  //   try {
+  //     // Limpa apenas os pedidos salvos (mantém usuário, carteira, etc)
+  //     await AsyncStorage.removeItem('@entregador:deliveries');
+  //     console.log('✅ Pedidos antigos limpos! Os novos pedidos terão IDs corretos.');
+  //   } catch (error) {
+  //     console.error('Erro ao limpar pedidos:', error);
+  //   }
+  // };
   
-  clearOldDeliveries();
-}, []);
+//   clearOldDeliveries();
+// }, []);
   return (
     <SafeAreaProvider>
       <AuthProvider>

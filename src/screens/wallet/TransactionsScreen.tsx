@@ -10,15 +10,16 @@ import {
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
-import { useNavigation } from '@react-navigation/native';
+import { useNavigation, NavigationProp } from '@react-navigation/native';
 import { useWallet } from '../../contexts/WalletContext';
+import { WalletStackParamList } from '../../types';
 import colors from '../../constants/colors';
 
 type FilterType = 'todas' | 'entrega' | 'saque' | 'bonus';
 type PeriodType = 'hoje' | 'semana' | 'mes' | 'todos';
 
 const TransactionsScreen: React.FC = () => {
-  const navigation = useNavigation();
+  const navigation = useNavigation<NavigationProp<WalletStackParamList>>();
   const { transactions, isBalanceVisible } = useWallet();
   
   const [filterType, setFilterType] = useState<FilterType>('todas');
@@ -178,6 +179,11 @@ const TransactionsScreen: React.FC = () => {
     { period: 'mes' as PeriodType, label: '30 dias', width: 105 },
   ];
 
+  // ✅ NOVO: Navega para detalhes da transação
+  const handleTransactionPress = (transactionId: string) => {
+    navigation.navigate('TransactionDetails', { transactionId });
+  };
+
   // Agrupa transações por data
   const groupedTransactions = useMemo(() => {
     const groups: { [key: string]: typeof filteredTransactions } = {};
@@ -194,7 +200,11 @@ const TransactionsScreen: React.FC = () => {
   }, [filteredTransactions]);
 
   const renderTransaction = ({ item }: any) => (
-    <View style={styles.transactionItem}>
+    <TouchableOpacity 
+      style={styles.transactionItem}
+      onPress={() => handleTransactionPress(item.id)}
+      activeOpacity={0.7}
+    >
       <View style={styles.transactionLeft}>
         <View style={[
           styles.transactionIcon,
@@ -229,7 +239,7 @@ const TransactionsScreen: React.FC = () => {
           </Text>
         </View>
       </View>
-    </View>
+    </TouchableOpacity>
   );
 
   const renderDateGroup = ({ item }: any) => (

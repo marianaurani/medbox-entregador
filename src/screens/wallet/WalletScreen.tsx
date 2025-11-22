@@ -10,22 +10,16 @@ import {
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
-import { useNavigation, NavigationProp, CommonActions } from '@react-navigation/native';
+import { useNavigation, NavigationProp } from '@react-navigation/native';
 import { useWallet } from '../../contexts/WalletContext';
+import { WalletStackParamList } from '../../types';
 import colors from '../../constants/colors';
-
-type WalletStackParamList = {
-  WalletHome: undefined;
-  Transactions: undefined;
-  Withdraw: undefined;
-};
 
 const WalletScreen: React.FC = () => {
   const navigation = useNavigation<NavigationProp<WalletStackParamList>>();
   
   const handleSettings = () => {
-    // Navega para a nova tela de configurações da carteira
-    navigation.navigate('WalletSettings' as never);
+    navigation.navigate('WalletSettings');
   };
   
   const { balance, earnings, transactions, isBalanceVisible, toggleBalanceVisibility } = useWallet();
@@ -41,10 +35,8 @@ const WalletScreen: React.FC = () => {
 
   const formatDate = (date: Date | string) => {
     try {
-      // Converte string para Date se necessário
       const dateObj = typeof date === 'string' ? new Date(date) : date;
       
-      // Verifica se é uma data válida
       if (!dateObj || isNaN(dateObj.getTime())) {
         return 'Data inválida';
       }
@@ -95,8 +87,17 @@ const WalletScreen: React.FC = () => {
     navigation.navigate('Transactions');
   };
 
+  // ✅ NOVO: Navega para detalhes da transação
+  const handleTransactionPress = (transactionId: string) => {
+    navigation.navigate('TransactionDetails', { transactionId });
+  };
+
   const renderTransaction = ({ item }: any) => (
-    <View style={styles.transactionItem}>
+    <TouchableOpacity 
+      style={styles.transactionItem}
+      onPress={() => handleTransactionPress(item.id)}
+      activeOpacity={0.7}
+    >
       <View style={styles.transactionLeft}>
         <View style={[
           styles.transactionIcon,
@@ -128,7 +129,7 @@ const WalletScreen: React.FC = () => {
           </Text>
         </View>
       </View>
-    </View>
+    </TouchableOpacity>
   );
 
   return (

@@ -12,9 +12,9 @@ export type AuthStackParamList = {
   VerificationMethod: { email: string; phone: string };
   SecurityCode: { method: 'email' | 'sms'; contact: string };
   CreatePassword: undefined;
-  VehicleSelection: undefined; // ✅ ADICIONADO
-  PhotoUpload: { vehicleType: VehicleType }; // ✅ ATUALIZADO
-  CNHUpload: { vehicleType: VehicleType }; // ✅ ATUALIZADO
+  VehicleSelection: undefined;
+  PhotoUpload: { vehicleType: VehicleType };
+  CNHUpload: { vehicleType: VehicleType };
   RegistrationComplete: undefined;
 };
 
@@ -35,6 +35,8 @@ export type WalletStackParamList = {
   WalletMain: undefined;
   Transactions: undefined;
   Withdraw: undefined;
+  WalletSettings: undefined;
+  TransactionDetails: { transactionId: string }; // ✅ NOVO
 };
 
 export type ProfileStackParamList = {
@@ -61,7 +63,7 @@ export interface User {
   status: UserStatus;
   photo?: string;
   cnhPhoto?: string;
-  vehicleType?: VehicleType; // ✅ ADICIONADO
+  vehicleType?: VehicleType;
   registrationStatus?: 'pendente' | 'aprovado' | 'rejeitado';
   approvedAt?: Date;
 }
@@ -73,7 +75,7 @@ export interface SignUpData {
   phone: string;
   email: string;
   password: string;
-  vehicleType?: VehicleType; // ✅ ADICIONADO
+  vehicleType?: VehicleType;
 }
 
 export interface AuthContextData {
@@ -145,7 +147,7 @@ export interface Transaction {
   description: string;
   date: Date;
   status: 'concluido' | 'pendente' | 'cancelado';
-  deliveryId?: string;
+  deliveryId?: string; // ✅ ADICIONADO - Conecta com a entrega
 }
 
 export interface Earnings {
