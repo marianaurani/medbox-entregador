@@ -4,11 +4,13 @@ import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import WalletScreen from '../screens/wallet/WalletScreen';
 import TransactionsScreen from '../screens/wallet/TransactionsScreen';
 import WithdrawScreen from '../screens/wallet/WithdrawScreen';
+import WalletSettingsScreen from '../screens/wallet/WalletSettingsScreen';
 
 export type WalletStackParamList = {
   WalletHome: undefined;
   Transactions: undefined;
   Withdraw: undefined;
+  WalletSettings: undefined;
 };
 
 const Stack = createNativeStackNavigator<WalletStackParamList>();
@@ -31,6 +33,10 @@ export const WalletNavigator: React.FC = () => {
       <Stack.Screen 
         name="Withdraw" 
         component={WithdrawScreen}
+      />
+      <Stack.Screen 
+        name="WalletSettings" 
+        component={WalletSettingsScreen}
       />
     </Stack.Navigator>
   );

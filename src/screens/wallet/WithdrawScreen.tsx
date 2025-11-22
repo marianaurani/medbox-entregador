@@ -13,7 +13,7 @@ import {
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
-import { useNavigation, CommonActions } from '@react-navigation/native';
+import { useNavigation } from '@react-navigation/native';
 import { useWallet } from '../../contexts/WalletContext';
 import { useBank, PixKeyType } from '../../contexts/BankContext';
 import colors from '../../constants/colors';
@@ -25,19 +25,9 @@ const WithdrawScreen: React.FC = () => {
   const { balance, withdraw } = useWallet();
   const { defaultPixKey, bankAccount } = useBank();
 
-  const [withdrawMethod, setWithdrawMethod] = useState<WithdrawMethod>('pix');
   const [amount, setAmount] = useState('');
-  const [pixKeyType, setPixKeyType] = useState<PixKeyType>('cpf');
-  const [pixKey, setPixKey] = useState('');
+  const [withdrawMethod, setWithdrawMethod] = useState<WithdrawMethod>('pix');
   const [isSubmitting, setIsSubmitting] = useState(false);
-
-  // Pré-preenche com a chave padrão se existir
-  useEffect(() => {
-    if (defaultPixKey) {
-      setPixKeyType(defaultPixKey.type);
-      setPixKey(defaultPixKey.key);
-    }
-  }, [defaultPixKey]);
 
   const formatCurrency = (value: string) => {
     const numbers = value.replace(/\D/g, '');
@@ -85,12 +75,25 @@ const WithdrawScreen: React.FC = () => {
     },
   ];
 
-  const pixKeyTypes = [
-    { type: 'cpf' as PixKeyType, label: 'CPF', icon: 'person-outline', placeholder: '000.000.000-00' },
-    { type: 'phone' as PixKeyType, label: 'Telefone', icon: 'call-outline', placeholder: '(00) 00000-0000' },
-    { type: 'email' as PixKeyType, label: 'E-mail', icon: 'mail-outline', placeholder: 'seu@email.com' },
-    { type: 'random' as PixKeyType, label: 'Aleatória', icon: 'key-outline', placeholder: 'Chave aleatória' },
-  ];
+  const getPixIcon = (type: PixKeyType): any => {
+    const icons: { [key in PixKeyType]: string } = {
+      cpf: 'person',
+      phone: 'call',
+      email: 'mail',
+      random: 'key',
+    };
+    return icons[type];
+  };
+
+  const getPixLabel = (type: PixKeyType) => {
+    const labels = {
+      cpf: 'CPF',
+      phone: 'Telefone',
+      email: 'E-mail',
+      random: 'Chave Aleatória',
+    };
+    return labels[type];
+  };
 
   const handleQuickAmount = (value: number) => {
     setAmount(value.toFixed(2).replace('.', ','));
@@ -102,6 +105,18 @@ const WithdrawScreen: React.FC = () => {
 
   const getFee = (): number => {
     return withdrawMethod === 'ted' ? 5 : 0;
+  };
+
+  const canProceed = (): boolean => {
+    const amountValue = getAmountValue();
+    if (amountValue <= 0) return false;
+    if (withdrawMethod === 'pix' && !defaultPixKey) return false;
+    if ((withdrawMethod === 'bank' || withdrawMethod === 'ted') && !bankAccount) return false;
+    return true;
+  };
+
+  const handleNavigateToSettings = () => {
+    navigation.navigate('WalletSettings' as never);
   };
 
   const validateForm = (): boolean => {
@@ -131,33 +146,25 @@ const WithdrawScreen: React.FC = () => {
       return false;
     }
 
-    if (withdrawMethod === 'pix' && !pixKey.trim()) {
-      Alert.alert('Chave PIX obrigatória', 'Digite sua chave PIX');
+    if (withdrawMethod === 'pix' && !defaultPixKey) {
+      Alert.alert(
+        'Chave PIX necessária', 
+        'Configure uma chave PIX antes de continuar.',
+        [
+          { text: 'Cancelar', style: 'cancel' },
+          { text: 'Configurar', onPress: handleNavigateToSettings }
+        ]
+      );
       return false;
     }
 
     if ((withdrawMethod === 'bank' || withdrawMethod === 'ted') && !bankAccount) {
       Alert.alert(
         'Conta bancária necessária', 
-        'Você precisa cadastrar uma conta bancária primeiro.',
+        'Configure uma conta bancária antes de continuar.',
         [
           { text: 'Cancelar', style: 'cancel' },
-          { 
-            text: 'Cadastrar Agora', 
-            onPress: () => {
-              navigation.dispatch(
-                CommonActions.navigate({
-                  name: 'Menu',
-                  params: {
-                    screen: 'Profile',
-                    params: {
-                      screen: 'BankAccount',
-                    },
-                  },
-                })
-              );
-            }
-          }
+          { text: 'Configurar', onPress: handleNavigateToSettings }
         ]
       );
       return false;
@@ -177,7 +184,7 @@ const WithdrawScreen: React.FC = () => {
       const totalAmount = amountValue + fee;
       
       const destination = withdrawMethod === 'pix' 
-        ? pixKey 
+        ? defaultPixKey?.key || ''
         : `${bankAccount?.bank} - ${bankAccount?.account}-${bankAccount?.digit}`;
       
       const success = await withdraw(totalAmount, destination);
@@ -189,12 +196,7 @@ const WithdrawScreen: React.FC = () => {
         Alert.alert(
           'Saque Solicitado!',
           `Seu saque de R$ ${amount} via ${methodName} foi solicitado.\n\nTempo de processamento: ${timeText}${fee > 0 ? `\nTaxa: R$ ${fee.toFixed(2).replace('.', ',')}` : ''}`,
-          [
-            {
-              text: 'OK',
-              onPress: () => navigation.goBack(),
-            },
-          ]
+          [{ text: 'OK', onPress: () => navigation.goBack() }]
         );
       } else {
         Alert.alert('Erro', 'Não foi possível realizar o saque. Verifique os dados e tente novamente.');
@@ -208,121 +210,6 @@ const WithdrawScreen: React.FC = () => {
 
   const quickAmounts = [50, 100, 200, balance.available];
 
-  const renderPixForm = () => (
-    <>
-      <View style={styles.section}>
-        <Text style={styles.sectionTitle}>Tipo de Chave PIX</Text>
-        <View style={styles.pixTypesContainer}>
-          {pixKeyTypes.map((type) => (
-            <TouchableOpacity
-              key={type.type}
-              style={[
-                styles.pixTypeButton,
-                pixKeyType === type.type && styles.pixTypeButtonActive,
-              ]}
-              onPress={() => setPixKeyType(type.type)}
-            >
-              <Ionicons
-                name={type.icon as any}
-                size={18}
-                color={pixKeyType === type.type ? colors.primary : colors.textSecondary}
-              />
-              <Text
-                style={[
-                  styles.pixTypeText,
-                  pixKeyType === type.type && styles.pixTypeTextActive,
-                ]}
-              >
-                {type.label}
-              </Text>
-            </TouchableOpacity>
-          ))}
-        </View>
-      </View>
-
-      <View style={styles.section}>
-        <Text style={styles.sectionTitle}>Chave PIX</Text>
-        <View style={styles.inputContainer}>
-          <Ionicons
-            name={pixKeyTypes.find((t) => t.type === pixKeyType)?.icon as any}
-            size={20}
-            color={colors.textSecondary}
-          />
-          <TextInput
-            style={styles.input}
-            value={pixKey}
-            onChangeText={setPixKey}
-            placeholder={pixKeyTypes.find((t) => t.type === pixKeyType)?.placeholder}
-            placeholderTextColor={colors.textLight}
-            keyboardType={
-              pixKeyType === 'phone' ? 'phone-pad' : pixKeyType === 'email' ? 'email-address' : 'default'
-            }
-          />
-        </View>
-      </View>
-    </>
-  );
-
-  const renderBankForm = () => (
-    <View style={styles.section}>
-      <Text style={styles.sectionTitle}>Conta Bancária</Text>
-      {bankAccount ? (
-        <View style={styles.bankAccountCard}>
-          <View style={styles.bankAccountHeader}>
-            <Ionicons name="business" size={24} color={colors.primary} />
-            <View style={styles.bankAccountInfo}>
-              <Text style={styles.bankAccountName}>{bankAccount.bank}</Text>
-              <Text style={styles.bankAccountDetails}>
-                Ag: {bankAccount.agency} • Conta: {bankAccount.account}-{bankAccount.digit}
-              </Text>
-              <Text style={styles.bankAccountType}>
-                {bankAccount.accountType === 'corrente' ? 'Conta Corrente' : 'Conta Poupança'}
-              </Text>
-            </View>
-          </View>
-          <TouchableOpacity 
-            style={styles.changeBankButton}
-            onPress={() => {
-              navigation.dispatch(
-                CommonActions.navigate({
-                  name: 'Menu',
-                  params: {
-                    screen: 'Profile',
-                    params: {
-                      screen: 'BankAccount',
-                    },
-                  },
-                })
-              );
-            }}
-          >
-            <Text style={styles.changeBankText}>Alterar</Text>
-          </TouchableOpacity>
-        </View>
-      ) : (
-        <TouchableOpacity 
-          style={styles.addBankButton}
-          onPress={() => {
-            navigation.dispatch(
-              CommonActions.navigate({
-                name: 'Menu',
-                params: {
-                  screen: 'Profile',
-                  params: {
-                    screen: 'BankAccount',
-                  },
-                },
-              })
-            );
-          }}
-        >
-          <Ionicons name="add-circle-outline" size={24} color={colors.primary} />
-          <Text style={styles.addBankText}>Adicionar Conta Bancária</Text>
-        </TouchableOpacity>
-      )}
-    </View>
-  );
-
   return (
     <SafeAreaView style={styles.container} edges={['top']}>
       <KeyboardAvoidingView
@@ -334,18 +221,51 @@ const WithdrawScreen: React.FC = () => {
             <Ionicons name="arrow-back" size={24} color={colors.text} />
           </TouchableOpacity>
           <Text style={styles.headerTitle}>Sacar</Text>
-          <View style={{ width: 24 }} />
+          <TouchableOpacity onPress={handleNavigateToSettings} hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}>
+            <Ionicons name="settings-outline" size={24} color={colors.text} />
+          </TouchableOpacity>
         </View>
 
         <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={styles.content}>
+          {/* 1. Saldo Disponível */}
           <View style={styles.balanceCard}>
-            <Text style={styles.balanceLabel}>Saldo disponível para saque</Text>
+            <Text style={styles.balanceLabel}>Saldo disponível</Text>
             <Text style={styles.balanceAmount}>
               R$ {balance.available.toFixed(2).replace('.', ',')}
             </Text>
           </View>
 
-          {/* Métodos de Saque */}
+          {/* 2. Quanto deseja sacar */}
+          <View style={styles.section}>
+            <Text style={styles.sectionTitle}>Quanto deseja sacar?</Text>
+            <View style={styles.amountInputContainer}>
+              <Text style={styles.currencySymbol}>R$</Text>
+              <TextInput
+                style={styles.amountInput}
+                value={amount}
+                onChangeText={handleAmountChange}
+                keyboardType="numeric"
+                placeholder="0,00"
+                placeholderTextColor={colors.textLight}
+              />
+            </View>
+
+            <View style={styles.quickAmountsContainer}>
+              {quickAmounts.map((value, index) => (
+                <TouchableOpacity
+                  key={index}
+                  style={styles.quickAmountButton}
+                  onPress={() => handleQuickAmount(value)}
+                >
+                  <Text style={styles.quickAmountText}>
+                    {index === 3 ? 'Tudo' : `R$ ${value}`}
+                  </Text>
+                </TouchableOpacity>
+              ))}
+            </View>
+          </View>
+
+          {/* 3. Método de Saque */}
           <View style={styles.section}>
             <Text style={styles.sectionTitle}>Método de Saque</Text>
             <View style={styles.methodsContainer}>
@@ -384,60 +304,84 @@ const WithdrawScreen: React.FC = () => {
             </View>
           </View>
 
-          {/* Valor do Saque */}
+          {/* 4. Destino do Saque - Simplificado */}
           <View style={styles.section}>
-            <Text style={styles.sectionTitle}>Quanto deseja sacar?</Text>
-            <View style={styles.amountInputContainer}>
-              <Text style={styles.currencySymbol}>R$</Text>
-              <TextInput
-                style={styles.amountInput}
-                value={amount}
-                onChangeText={handleAmountChange}
-                keyboardType="numeric"
-                placeholder="0,00"
-                placeholderTextColor={colors.textLight}
-              />
+            <View style={styles.sectionHeader}>
+              <Text style={styles.sectionTitle}>
+                {withdrawMethod === 'pix' ? 'Chave PIX' : 'Conta Bancária'}
+              </Text>
+              <TouchableOpacity onPress={handleNavigateToSettings}>
+                <Text style={styles.changeLink}>Configurar</Text>
+              </TouchableOpacity>
             </View>
 
-            <View style={styles.quickAmountsContainer}>
-              {quickAmounts.map((value, index) => (
-                <TouchableOpacity
-                  key={index}
-                  style={styles.quickAmountButton}
-                  onPress={() => handleQuickAmount(value)}
+            {withdrawMethod === 'pix' ? (
+              defaultPixKey ? (
+                <View style={styles.destinationCard}>
+                  <View style={[styles.destinationIcon, { backgroundColor: colors.medboxLightGreen }]}>
+                    <Ionicons name={getPixIcon(defaultPixKey.type)} size={24} color={colors.primary} />
+                  </View>
+                  <View style={styles.destinationInfo}>
+                    <Text style={styles.destinationType}>{getPixLabel(defaultPixKey.type)}</Text>
+                    <Text style={styles.destinationValue} numberOfLines={1}>{defaultPixKey.key}</Text>
+                  </View>
+                  <Ionicons name="checkmark-circle" size={24} color={colors.success} />
+                </View>
+              ) : (
+                <TouchableOpacity 
+                  style={styles.addDestinationButton}
+                  onPress={handleNavigateToSettings}
                 >
-                  <Text style={styles.quickAmountText}>
-                    {index === 3 ? 'Tudo' : `R$ ${value}`}
-                  </Text>
+                  <Ionicons name="add-circle-outline" size={24} color={colors.primary} />
+                  <Text style={styles.addDestinationText}>Adicionar Chave PIX</Text>
                 </TouchableOpacity>
-              ))}
-            </View>
-
-            {/* Resumo de Taxa */}
-            {getFee() > 0 && getAmountValue() > 0 && (
-              <View style={styles.feeCard}>
-                <View style={styles.feeRow}>
-                  <Text style={styles.feeLabel}>Valor do saque</Text>
-                  <Text style={styles.feeValue}>R$ {amount}</Text>
+              )
+            ) : (
+              bankAccount ? (
+                <View style={styles.destinationCard}>
+                  <View style={[styles.destinationIcon, { backgroundColor: colors.success + '20' }]}>
+                    <Ionicons name="business" size={24} color={colors.success} />
+                  </View>
+                  <View style={styles.destinationInfo}>
+                    <Text style={styles.destinationType}>{bankAccount.bank}</Text>
+                    <Text style={styles.destinationValue}>
+                      Ag: {bankAccount.agency} • Conta: {bankAccount.account}-{bankAccount.digit}
+                    </Text>
+                  </View>
+                  <Ionicons name="checkmark-circle" size={24} color={colors.success} />
                 </View>
-                <View style={styles.feeRow}>
-                  <Text style={styles.feeLabel}>Taxa</Text>
-                  <Text style={styles.feeValue}>R$ {getFee().toFixed(2).replace('.', ',')}</Text>
-                </View>
-                <View style={styles.feeDivider} />
-                <View style={styles.feeRow}>
-                  <Text style={styles.feeTotalLabel}>Total a ser debitado</Text>
-                  <Text style={styles.feeTotalValue}>
-                    R$ {(getAmountValue() + getFee()).toFixed(2).replace('.', ',')}
-                  </Text>
-                </View>
-              </View>
+              ) : (
+                <TouchableOpacity 
+                  style={styles.addDestinationButton}
+                  onPress={handleNavigateToSettings}
+                >
+                  <Ionicons name="add-circle-outline" size={24} color={colors.primary} />
+                  <Text style={styles.addDestinationText}>Adicionar Conta Bancária</Text>
+                </TouchableOpacity>
+              )
             )}
           </View>
 
-          {/* Formulário específico do método */}
-          {withdrawMethod === 'pix' && renderPixForm()}
-          {(withdrawMethod === 'bank' || withdrawMethod === 'ted') && renderBankForm()}
+          {/* Resumo de Taxa */}
+          {getFee() > 0 && getAmountValue() > 0 && (
+            <View style={styles.feeCard}>
+              <View style={styles.feeRow}>
+                <Text style={styles.feeLabel}>Valor do saque</Text>
+                <Text style={styles.feeValue}>R$ {amount}</Text>
+              </View>
+              <View style={styles.feeRow}>
+                <Text style={styles.feeLabel}>Taxa</Text>
+                <Text style={styles.feeValue}>R$ {getFee().toFixed(2).replace('.', ',')}</Text>
+              </View>
+              <View style={styles.feeDivider} />
+              <View style={styles.feeRow}>
+                <Text style={styles.feeTotalLabel}>Total a ser debitado</Text>
+                <Text style={styles.feeTotalValue}>
+                  R$ {(getAmountValue() + getFee()).toFixed(2).replace('.', ',')}
+                </Text>
+              </View>
+            </View>
+          )}
 
           {/* Informações */}
           <View style={styles.infoCard}>
@@ -454,29 +398,23 @@ const WithdrawScreen: React.FC = () => {
                   • Saques via PIX são gratuitos e instantâneos
                 </Text>
               )}
-              {withdrawMethod === 'ted' && (
-                <Text style={styles.infoText}>
-                  • TED tem taxa de R$ 5,00 mas é processado em até 2 horas
-                </Text>
-              )}
             </View>
           </View>
 
-          <View style={{ height: 100 }} />
-        </ScrollView>
-
-        <View style={styles.bottomContainer}>
+          {/* Botão de Confirmar */}
           <TouchableOpacity
-            style={[styles.confirmButton, isSubmitting && styles.confirmButtonDisabled]}
+            style={[styles.confirmButton, (!canProceed() || isSubmitting) && styles.confirmButtonDisabled]}
             onPress={handleWithdraw}
-            disabled={isSubmitting}
+            disabled={!canProceed() || isSubmitting}
           >
             <Ionicons name="checkmark-circle" size={24} color="white" />
             <Text style={styles.confirmButtonText}>
               {isSubmitting ? 'Processando...' : 'Confirmar Saque'}
             </Text>
           </TouchableOpacity>
-        </View>
+
+          <View style={{ height: 40 }} />
+        </ScrollView>
       </KeyboardAvoidingView>
     </SafeAreaView>
   );
@@ -528,57 +466,22 @@ const styles = StyleSheet.create({
   section: {
     marginBottom: 24,
   },
+  sectionHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 12,
+  },
   sectionTitle: {
     fontSize: 16,
     fontWeight: 'bold',
     color: colors.text,
-    marginBottom: 12,
+    marginBottom: 16,
   },
-  methodsContainer: {
-    gap: 12,
-  },
-  methodCard: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: colors.backgroundLight,
-    padding: 16,
-    borderRadius: 12,
-    borderWidth: 2,
-    borderColor: colors.border,
-    gap: 12,
-  },
-  methodCardActive: {
-    borderColor: colors.primary,
-    backgroundColor: colors.medboxLightGreen,
-  },
-  methodIcon: {
-    width: 50,
-    height: 50,
-    borderRadius: 25,
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  methodInfo: {
-    flex: 1,
-  },
-  methodLabel: {
-    fontSize: 16,
-    fontWeight: 'bold',
-    color: colors.text,
-    marginBottom: 2,
-  },
-  methodLabelActive: {
-    color: colors.primary,
-  },
-  methodTime: {
-    fontSize: 12,
-    color: colors.textSecondary,
-    marginBottom: 2,
-  },
-  methodFee: {
-    fontSize: 12,
+  changeLink: {
+    fontSize: 14,
     fontWeight: '600',
-    color: colors.textSecondary,
+    color: colors.primary,
   },
   amountInputContainer: {
     flexDirection: 'row',
@@ -621,11 +524,106 @@ const styles = StyleSheet.create({
     fontWeight: '600',
     color: colors.primary,
   },
+  methodsContainer: {
+    gap: 12,
+  },
+  methodCard: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: colors.backgroundLight,
+    padding: 20,
+    borderRadius: 12,
+    borderWidth: 2,
+    borderColor: colors.border,
+    gap: 16,
+  },
+  methodCardActive: {
+    borderColor: colors.primary,
+    backgroundColor: colors.medboxLightGreen,
+  },
+  methodIcon: {
+    width: 50,
+    height: 50,
+    borderRadius: 25,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  methodInfo: {
+    flex: 1,
+  },
+  methodLabel: {
+    fontSize: 16,
+    fontWeight: 'bold',
+    color: colors.text,
+    marginBottom: 4,
+  },
+  methodLabelActive: {
+    color: colors.primary,
+  },
+  methodTime: {
+    fontSize: 12,
+    color: colors.textSecondary,
+    marginBottom: 4,
+  },
+  methodFee: {
+    fontSize: 12,
+    fontWeight: '600',
+    color: colors.textSecondary,
+  },
+  destinationCard: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: colors.backgroundLight,
+    padding: 18,
+    borderRadius: 12,
+    borderWidth: 1,
+    borderColor: colors.border,
+    gap: 14,
+  },
+  destinationIcon: {
+    width: 48,
+    height: 48,
+    borderRadius: 24,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  destinationInfo: {
+    flex: 1,
+  },
+  destinationType: {
+    fontSize: 12,
+    fontWeight: '600',
+    color: colors.textSecondary,
+    textTransform: 'uppercase',
+    marginBottom: 6,
+  },
+  destinationValue: {
+    fontSize: 15,
+    fontWeight: '600',
+    color: colors.text,
+  },
+  addDestinationButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: colors.backgroundLight,
+    padding: 18,
+    borderRadius: 12,
+    gap: 10,
+    borderWidth: 2,
+    borderColor: colors.primary,
+    borderStyle: 'dashed',
+  },
+  addDestinationText: {
+    fontSize: 15,
+    fontWeight: '600',
+    color: colors.primary,
+  },
   feeCard: {
     backgroundColor: colors.backgroundLight,
     padding: 16,
     borderRadius: 12,
-    marginTop: 12,
+    marginBottom: 24,
     gap: 8,
   },
   feeRow: {
@@ -657,115 +655,13 @@ const styles = StyleSheet.create({
     fontWeight: 'bold',
     color: colors.primary,
   },
-  pixTypesContainer: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    gap: 10,
-  },
-  pixTypeButton: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: colors.backgroundLight,
-    paddingHorizontal: 14,
-    paddingVertical: 10,
-    borderRadius: 8,
-    gap: 6,
-    borderWidth: 1,
-    borderColor: colors.border,
-  },
-  pixTypeButtonActive: {
-    borderColor: colors.primary,
-    backgroundColor: colors.medboxLightGreen,
-  },
-  pixTypeText: {
-    fontSize: 13,
-    fontWeight: '600',
-    color: colors.textSecondary,
-  },
-  pixTypeTextActive: {
-    color: colors.primary,
-  },
-  inputContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: colors.backgroundLight,
-    borderWidth: 1,
-    borderColor: colors.border,
-    borderRadius: 12,
-    paddingHorizontal: 16,
-    paddingVertical: 14,
-    gap: 12,
-  },
-  input: {
-    flex: 1,
-    fontSize: 15,
-    color: colors.text,
-  },
-  bankAccountCard: {
-    backgroundColor: colors.backgroundLight,
-    padding: 16,
-    borderRadius: 12,
-    borderWidth: 1,
-    borderColor: colors.border,
-  },
-  bankAccountHeader: {
-    flexDirection: 'row',
-    gap: 12,
-    marginBottom: 12,
-  },
-  bankAccountInfo: {
-    flex: 1,
-  },
-  bankAccountName: {
-    fontSize: 15,
-    fontWeight: 'bold',
-    color: colors.text,
-    marginBottom: 4,
-  },
-  bankAccountDetails: {
-    fontSize: 13,
-    color: colors.textSecondary,
-    marginBottom: 2,
-  },
-  bankAccountType: {
-    fontSize: 12,
-    color: colors.textLight,
-  },
-  changeBankButton: {
-    alignSelf: 'flex-start',
-    paddingHorizontal: 12,
-    paddingVertical: 6,
-    borderRadius: 6,
-    backgroundColor: colors.medboxLightGreen,
-  },
-  changeBankText: {
-    fontSize: 13,
-    fontWeight: '600',
-    color: colors.primary,
-  },
-  addBankButton: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    backgroundColor: colors.backgroundLight,
-    padding: 20,
-    borderRadius: 12,
-    borderWidth: 2,
-    borderColor: colors.primary,
-    borderStyle: 'dashed',
-    gap: 10,
-  },
-  addBankText: {
-    fontSize: 15,
-    fontWeight: '600',
-    color: colors.primary,
-  },
   infoCard: {
     flexDirection: 'row',
     backgroundColor: colors.medboxLightGreen,
     padding: 16,
     borderRadius: 12,
     gap: 12,
+    marginBottom: 24,
   },
   infoTextContainer: {
     flex: 1,
@@ -775,18 +671,6 @@ const styles = StyleSheet.create({
     fontSize: 13,
     color: colors.textSecondary,
     lineHeight: 18,
-  },
-  bottomContainer: {
-    backgroundColor: colors.backgroundLight,
-    padding: 20,
-    paddingBottom: 30,
-    borderTopWidth: 1,
-    borderTopColor: colors.border,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: -2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 4,
-    elevation: 5,
   },
   confirmButton: {
     flexDirection: 'row',
@@ -798,7 +682,7 @@ const styles = StyleSheet.create({
     gap: 10,
   },
   confirmButtonDisabled: {
-    opacity: 0.6,
+    opacity: 0.5,
   },
   confirmButtonText: {
     color: 'white',

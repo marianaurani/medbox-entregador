@@ -329,7 +329,8 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
-    paddingVertical: 10,
+    paddingVertical: 12,
+    paddingHorizontal: 8,
     borderRadius: 8,
     gap: 6,
   },
@@ -340,6 +341,7 @@ const styles = StyleSheet.create({
     fontSize: 13,
     fontWeight: '600',
     color: colors.textSecondary,
+    textAlign: 'center',
   },
   tabTextActive: {
     color: 'white',

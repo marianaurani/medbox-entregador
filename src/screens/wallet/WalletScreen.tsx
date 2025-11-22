@@ -24,18 +24,8 @@ const WalletScreen: React.FC = () => {
   const navigation = useNavigation<NavigationProp<WalletStackParamList>>();
   
   const handleSettings = () => {
-    // Navega para o Menu e depois para o Profile -> BankData
-    navigation.dispatch(
-      CommonActions.navigate({
-        name: 'Menu',
-        params: {
-          screen: 'Profile',
-          params: {
-            screen: 'BankData',
-          },
-        },
-      })
-    );
+    // Navega para a nova tela de configurações da carteira
+    navigation.navigate('WalletSettings' as never);
   };
   
   const { balance, earnings, transactions, isBalanceVisible, toggleBalanceVisibility } = useWallet();

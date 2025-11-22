@@ -24,6 +24,11 @@ const TransactionsScreen: React.FC = () => {
   const [filterType, setFilterType] = useState<FilterType>('todas');
   const [filterPeriod, setFilterPeriod] = useState<PeriodType>('todos');
 
+  // Função helper para converter data
+  const parseDate = (date: Date | string): Date => {
+    return typeof date === 'string' ? new Date(date) : date;
+  };
+
   // Filtros
   const filteredTransactions = useMemo(() => {
     let filtered = [...transactions];
@@ -39,7 +44,7 @@ const TransactionsScreen: React.FC = () => {
       const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
       
       filtered = filtered.filter(t => {
-        const transactionDate = new Date(t.date);
+        const transactionDate = parseDate(t.date);
         
         switch (filterPeriod) {
           case 'hoje':
@@ -58,7 +63,11 @@ const TransactionsScreen: React.FC = () => {
       });
     }
 
-    return filtered.sort((a, b) => b.date.getTime() - a.date.getTime());
+    return filtered.sort((a, b) => {
+      const dateA = parseDate(a.date);
+      const dateB = parseDate(b.date);
+      return dateB.getTime() - dateA.getTime();
+    });
   }, [transactions, filterType, filterPeriod]);
 
   // Estatísticas
@@ -83,21 +92,37 @@ const TransactionsScreen: React.FC = () => {
     return `R$ ${Math.abs(value).toFixed(2).replace('.', ',')}`;
   };
 
-  const formatDate = (date: Date) => {
-    return date.toLocaleDateString('pt-BR', {
-      day: '2-digit',
-      month: 'short',
-      hour: '2-digit',
-      minute: '2-digit',
-    });
+  const formatDate = (date: Date | string) => {
+    try {
+      const dateObj = parseDate(date);
+      if (!dateObj || isNaN(dateObj.getTime())) {
+        return 'Data inválida';
+      }
+      return dateObj.toLocaleDateString('pt-BR', {
+        day: '2-digit',
+        month: 'short',
+        hour: '2-digit',
+        minute: '2-digit',
+      });
+    } catch (error) {
+      return 'Data inválida';
+    }
   };
 
-  const formatDateFull = (date: Date) => {
-    return date.toLocaleDateString('pt-BR', {
-      day: '2-digit',
-      month: 'long',
-      year: 'numeric',
-    });
+  const formatDateFull = (date: Date | string) => {
+    try {
+      const dateObj = parseDate(date);
+      if (!dateObj || isNaN(dateObj.getTime())) {
+        return 'Data inválida';
+      }
+      return dateObj.toLocaleDateString('pt-BR', {
+        day: '2-digit',
+        month: 'long',
+        year: 'numeric',
+      });
+    } catch (error) {
+      return 'Data inválida';
+    }
   };
 
   const getTransactionIcon = (type: string) => {
