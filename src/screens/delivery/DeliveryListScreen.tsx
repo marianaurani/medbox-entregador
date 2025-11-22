@@ -110,8 +110,9 @@ const DeliveryListScreen: React.FC = () => {
   };
 
   const handleCardPress = (deliveryId: string, status: string) => {
+    // ✅ CORREÇÃO: Se for disponível, aceita direto ao clicar no card
     if (status === 'disponivel') {
-      navigation.navigate('DeliveryDetails', { deliveryId });
+      handleAcceptDelivery(deliveryId);
     } else if (status === 'aceito' || status === 'coletado' || status === 'em_rota') {
       navigation.navigate('DeliveryInProgress', { deliveryId });
     } else {
@@ -133,9 +134,12 @@ const DeliveryListScreen: React.FC = () => {
       <View style={styles.cardHeader}>
         <View style={styles.orderInfo}>
           <Text style={styles.orderId}>{item.orderId}</Text>
-          <View style={[styles.statusBadge, { backgroundColor: getStatusColor(item.status) }]}>
-            <Text style={styles.statusText}>{getStatusText(item.status)}</Text>
-          </View>
+          {/* ✅ CORREÇÃO: Badge só aparece se NÃO for disponível */}
+          {item.status !== 'disponivel' && (
+            <View style={[styles.statusBadge, { backgroundColor: getStatusColor(item.status) }]}>
+              <Text style={styles.statusText}>{getStatusText(item.status)}</Text>
+            </View>
+          )}
         </View>
         <Text style={styles.deliveryFee}>{formatCurrency(item.deliveryFee)}</Text>
       </View>
@@ -226,12 +230,9 @@ const DeliveryListScreen: React.FC = () => {
       {/* Header */}
       <View style={styles.header}>
         <Text style={styles.headerTitle}>Pedidos</Text>
-        <TouchableOpacity>
-          <Ionicons name="menu" size={28} color={colors.text} />
-        </TouchableOpacity>
       </View>
 
-      {/* Tabs */}
+      {/* ✅ CORREÇÃO: Tabs com largura flex melhor */}
       <View style={styles.tabsContainer}>
         <TouchableOpacity
           style={[styles.tab, activeTab === 'disponiveis' && styles.tabActive]}
@@ -248,10 +249,13 @@ const DeliveryListScreen: React.FC = () => {
         </TouchableOpacity>
 
         <TouchableOpacity
-          style={[styles.tab, activeTab === 'em_andamento' && styles.tabActive]}
+          style={[styles.tab, styles.tabWide, activeTab === 'em_andamento' && styles.tabActive]}
           onPress={() => setActiveTab('em_andamento')}
         >
-          <Text style={[styles.tabText, activeTab === 'em_andamento' && styles.tabTextActive]}>
+          <Text 
+            style={[styles.tabText, activeTab === 'em_andamento' && styles.tabTextActive]}
+            numberOfLines={1}
+          >
             Em Andamento
           </Text>
           {ongoingDeliveries.length > 0 && (
@@ -303,7 +307,7 @@ const styles = StyleSheet.create({
   },
   header: {
     flexDirection: 'row',
-    justifyContent: 'space-between',
+    justifyContent: 'flex-start',
     alignItems: 'center',
     paddingHorizontal: 20,
     paddingTop: 10,
@@ -322,7 +326,7 @@ const styles = StyleSheet.create({
     backgroundColor: colors.backgroundLight,
     paddingHorizontal: 20,
     paddingVertical: 10,
-    gap: 10,
+    gap: 8,
   },
   tab: {
     flex: 1,
@@ -330,18 +334,24 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     paddingVertical: 12,
-    paddingHorizontal: 8,
+    paddingHorizontal: 6,
     borderRadius: 8,
     gap: 6,
+    minWidth: 0,
+  },
+  // ✅ NOVO: Tab mais larga para "Em Andamento"
+  tabWide: {
+    flex: 1.3,
   },
   tabActive: {
     backgroundColor: colors.primary,
   },
   tabText: {
-    fontSize: 13,
+    fontSize: 12,
     fontWeight: '600',
     color: colors.textSecondary,
     textAlign: 'center',
+    flexShrink: 1,
   },
   tabTextActive: {
     color: 'white',

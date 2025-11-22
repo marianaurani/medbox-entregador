@@ -1,5 +1,5 @@
 // src/screens/delivery/DeliveryInProgressScreen.tsx
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import {
   View,
   Text,
@@ -38,8 +38,17 @@ const DeliveryInProgressScreen: React.FC = () => {
 
   if (!delivery) {
     return (
-      <SafeAreaView style={styles.container}>
-        <Text>Pedido não encontrado</Text>
+      <SafeAreaView style={styles.container} edges={['top']}>
+        <View style={styles.errorContainer}>
+          <Ionicons name="alert-circle-outline" size={64} color={colors.textLight} />
+          <Text style={styles.errorText}>Pedido não encontrado</Text>
+          <TouchableOpacity 
+            style={styles.backButton}
+            onPress={() => navigation.navigate('DeliveryList')}
+          >
+            <Text style={styles.backButtonText}>Voltar para Pedidos</Text>
+          </TouchableOpacity>
+        </View>
       </SafeAreaView>
     );
   }
@@ -134,7 +143,7 @@ const DeliveryInProgressScreen: React.FC = () => {
   const nextStep = getNextStepInfo();
 
   return (
-    <SafeAreaView style={styles.container}>
+    <SafeAreaView style={styles.container} edges={['top']}>
       {/* Header */}
       <View style={styles.header}>
         <TouchableOpacity onPress={() => navigation.goBack()}>
@@ -144,7 +153,10 @@ const DeliveryInProgressScreen: React.FC = () => {
         <View style={{ width: 24 }} />
       </View>
 
-      <ScrollView showsVerticalScrollIndicator={false}>
+      <ScrollView 
+        showsVerticalScrollIndicator={false}
+        contentContainerStyle={styles.scrollContent}
+      >
         {/* Status Card */}
         <View style={styles.statusCard}>
           <View style={styles.statusHeader}>
@@ -267,18 +279,19 @@ const DeliveryInProgressScreen: React.FC = () => {
           </View>
         </View>
 
-        <View style={{ height: 120 }} />
-      </ScrollView>
+        {/* Botão de Ação - DENTRO DO SCROLL */}
+        {nextStep && (
+          <View style={styles.actionButtonContainer}>
+            <TouchableOpacity style={styles.actionButton} onPress={nextStep.action}>
+              <Ionicons name={nextStep.buttonIcon} size={24} color="white" />
+              <Text style={styles.actionButtonText}>{nextStep.buttonText}</Text>
+            </TouchableOpacity>
+          </View>
+        )}
 
-      {/* Botão de Ação Fixo */}
-      {nextStep && (
-        <View style={styles.bottomContainer}>
-          <TouchableOpacity style={styles.actionButton} onPress={nextStep.action}>
-            <Ionicons name={nextStep.buttonIcon} size={24} color="white" />
-            <Text style={styles.actionButtonText}>{nextStep.buttonText}</Text>
-          </TouchableOpacity>
-        </View>
-      )}
+        {/* Espaço extra no final para não ficar colado no menu */}
+        <View style={{ height: 100 }} />
+      </ScrollView>
 
       {/* Modal de Código de Confirmação */}
       <Modal
@@ -334,6 +347,34 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: colors.background,
+  },
+  scrollContent: {
+    flexGrow: 1,
+    paddingBottom: 20,
+  },
+  errorContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    padding: 20,
+  },
+  errorText: {
+    fontSize: 18,
+    fontWeight: 'bold',
+    color: colors.text,
+    marginTop: 16,
+    marginBottom: 24,
+  },
+  backButton: {
+    backgroundColor: colors.primary,
+    paddingHorizontal: 24,
+    paddingVertical: 12,
+    borderRadius: 8,
+  },
+  backButtonText: {
+    color: 'white',
+    fontSize: 16,
+    fontWeight: '600',
   },
   header: {
     flexDirection: 'row',
@@ -556,20 +597,10 @@ const styles = StyleSheet.create({
     height: 1,
     backgroundColor: colors.divider,
   },
-  bottomContainer: {
-    bottom: 0,
-    left: 0,
-    right: 0,
-    backgroundColor: colors.backgroundLight,
-    padding: 20,
-    paddingBottom: 30,
-    borderTopWidth: 1,
-    borderTopColor: colors.border,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: -2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 4,
-    elevation: 5,
+  actionButtonContainer: {
+    marginHorizontal: 20,
+    marginTop: 4,
+    marginBottom: 20,
   },
   actionButton: {
     flexDirection: 'row',
@@ -579,6 +610,11 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     gap: 10,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.15,
+    shadowRadius: 4,
+    elevation: 3,
   },
   actionButtonText: {
     color: 'white',

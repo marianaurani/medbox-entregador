@@ -13,6 +13,8 @@ interface DeliveryContextData {
   getAvailableDeliveries: () => Delivery[];
   getOngoingDeliveries: () => Delivery[];
   getCompletedDeliveries: () => Delivery[];
+  addNewDelivery: (delivery: Delivery) => Promise<void>;
+  addMultipleDeliveries: (deliveries: Delivery[]) => Promise<void>;
   loading: boolean;
 }
 
@@ -37,6 +39,7 @@ export const DeliveryProvider: React.FC<{ children: React.ReactNode }> = ({ chil
         // Reconverte as datas de string para Date
         const deliveriesWithDates = parsedDeliveries.map((d: any) => ({
           ...d,
+          createdAt: d.createdAt ? new Date(d.createdAt) : new Date(),
           acceptedAt: d.acceptedAt ? new Date(d.acceptedAt) : undefined,
           collectedAt: d.collectedAt ? new Date(d.collectedAt) : undefined,
           deliveredAt: d.deliveredAt ? new Date(d.deliveredAt) : undefined,
@@ -153,6 +156,30 @@ export const DeliveryProvider: React.FC<{ children: React.ReactNode }> = ({ chil
     return deliveries.filter(d => d.status === 'entregue');
   }, [deliveries]);
 
+  // ✅ NOVA FUNÇÃO: Adicionar um pedido novo
+  const addNewDelivery = useCallback(async (delivery: Delivery) => {
+    try {
+      const updatedDeliveries = [delivery, ...deliveries];
+      await saveDeliveries(updatedDeliveries);
+      console.log('✅ Novo pedido adicionado:', delivery.id);
+    } catch (error) {
+      console.error('Erro ao adicionar nova entrega:', error);
+      throw error;
+    }
+  }, [deliveries]);
+
+  // ✅ NOVA FUNÇÃO: Adicionar vários pedidos de uma vez
+  const addMultipleDeliveries = useCallback(async (newDeliveries: Delivery[]) => {
+    try {
+      const updatedDeliveries = [...newDeliveries, ...deliveries];
+      await saveDeliveries(updatedDeliveries);
+      console.log(`✅ ${newDeliveries.length} pedidos adicionados`);
+    } catch (error) {
+      console.error('Erro ao adicionar entregas:', error);
+      throw error;
+    }
+  }, [deliveries]);
+
   return (
     <DeliveryContext.Provider
       value={{
@@ -164,6 +191,8 @@ export const DeliveryProvider: React.FC<{ children: React.ReactNode }> = ({ chil
         getAvailableDeliveries,
         getOngoingDeliveries,
         getCompletedDeliveries,
+        addNewDelivery,
+        addMultipleDeliveries,
         loading,
       }}
     >
