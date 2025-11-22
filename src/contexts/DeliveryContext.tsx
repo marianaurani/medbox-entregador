@@ -1,5 +1,6 @@
 // src/contexts/DeliveryContext.tsx
-import React, { createContext, useState, useContext, useCallback } from 'react';
+import React, { createContext, useState, useContext, useCallback, useEffect } from 'react';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import { Delivery } from '../types';
 import { mockDeliveries } from '../utils/mockData';
 
@@ -12,33 +13,72 @@ interface DeliveryContextData {
   getAvailableDeliveries: () => Delivery[];
   getOngoingDeliveries: () => Delivery[];
   getCompletedDeliveries: () => Delivery[];
+  loading: boolean;
 }
 
 const DeliveryContext = createContext<DeliveryContextData>({} as DeliveryContextData);
 
+const STORAGE_KEY = '@entregador:deliveries';
+
 export const DeliveryProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [deliveries, setDeliveries] = useState<Delivery[]>(mockDeliveries);
+  const [loading, setLoading] = useState(true);
+
+  // Carregar entregas salvas ao iniciar
+  useEffect(() => {
+    loadDeliveries();
+  }, []);
+
+  const loadDeliveries = async () => {
+    try {
+      const stored = await AsyncStorage.getItem(STORAGE_KEY);
+      if (stored) {
+        const parsedDeliveries = JSON.parse(stored);
+        // Reconverte as datas de string para Date
+        const deliveriesWithDates = parsedDeliveries.map((d: any) => ({
+          ...d,
+          acceptedAt: d.acceptedAt ? new Date(d.acceptedAt) : undefined,
+          collectedAt: d.collectedAt ? new Date(d.collectedAt) : undefined,
+          deliveredAt: d.deliveredAt ? new Date(d.deliveredAt) : undefined,
+        }));
+        setDeliveries(deliveriesWithDates);
+      }
+    } catch (error) {
+      console.error('Erro ao carregar entregas:', error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const saveDeliveries = async (newDeliveries: Delivery[]) => {
+    try {
+      await AsyncStorage.setItem(STORAGE_KEY, JSON.stringify(newDeliveries));
+      setDeliveries(newDeliveries);
+    } catch (error) {
+      console.error('Erro ao salvar entregas:', error);
+    }
+  };
 
   const acceptDelivery = useCallback(async (deliveryId: string) => {
     try {
       await new Promise(resolve => setTimeout(resolve, 500));
 
-      setDeliveries(prev =>
-        prev.map(delivery =>
-          delivery.id === deliveryId
-            ? {
-                ...delivery,
-                status: 'aceito' as const,
-                acceptedAt: new Date(),
-              }
-            : delivery
-        )
+      const updatedDeliveries = deliveries.map(delivery =>
+        delivery.id === deliveryId
+          ? {
+              ...delivery,
+              status: 'aceito' as const,
+              acceptedAt: new Date(),
+            }
+          : delivery
       );
+
+      await saveDeliveries(updatedDeliveries);
     } catch (error) {
       console.error('Erro ao aceitar pedido:', error);
       throw error;
     }
-  }, []);
+  }, [deliveries]);
 
   const collectDelivery = useCallback(async (deliveryId: string, code: string) => {
     try {
@@ -48,24 +88,23 @@ export const DeliveryProvider: React.FC<{ children: React.ReactNode }> = ({ chil
         return false;
       }
 
-      setDeliveries(prev =>
-        prev.map(delivery =>
-          delivery.id === deliveryId
-            ? {
-                ...delivery,
-                status: 'em_rota' as const,
-                collectedAt: new Date(),
-              }
-            : delivery
-        )
+      const updatedDeliveries = deliveries.map(delivery =>
+        delivery.id === deliveryId
+          ? {
+              ...delivery,
+              status: 'em_rota' as const,
+              collectedAt: new Date(),
+            }
+          : delivery
       );
 
+      await saveDeliveries(updatedDeliveries);
       return true;
     } catch (error) {
       console.error('Erro ao coletar pedido:', error);
       throw error;
     }
-  }, []);
+  }, [deliveries]);
 
   const completeDelivery = useCallback(async (deliveryId: string, code: string) => {
     try {
@@ -75,24 +114,23 @@ export const DeliveryProvider: React.FC<{ children: React.ReactNode }> = ({ chil
         return false;
       }
 
-      setDeliveries(prev =>
-        prev.map(delivery =>
-          delivery.id === deliveryId
-            ? {
-                ...delivery,
-                status: 'entregue' as const,
-                deliveredAt: new Date(),
-              }
-            : delivery
-        )
+      const updatedDeliveries = deliveries.map(delivery =>
+        delivery.id === deliveryId
+          ? {
+              ...delivery,
+              status: 'entregue' as const,
+              deliveredAt: new Date(),
+            }
+          : delivery
       );
 
+      await saveDeliveries(updatedDeliveries);
       return true;
     } catch (error) {
       console.error('Erro ao finalizar entrega:', error);
       throw error;
     }
-  }, []);
+  }, [deliveries]);
 
   const getDeliveryById = useCallback(
     (deliveryId: string) => {
@@ -126,6 +164,7 @@ export const DeliveryProvider: React.FC<{ children: React.ReactNode }> = ({ chil
         getAvailableDeliveries,
         getOngoingDeliveries,
         getCompletedDeliveries,
+        loading,
       }}
     >
       {children}
@@ -137,9 +176,8 @@ export const useDelivery = () => {
   const context = useContext(DeliveryContext);
 
   if (!context) {
-    // throw new Error('useDelivery deve ser usado dentro de um DeliveryProvider');
     console.error('useDelivery deve ser usado dentro de um DeliveryProvider');
-    return {} as DeliveryContextData; // Retorna vazio temporariamente
+    return {} as DeliveryContextData;
   }
 
   return context;

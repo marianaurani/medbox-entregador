@@ -1,5 +1,6 @@
 // src/contexts/BankContext.tsx
-import React, { createContext, useState, useContext, useCallback } from 'react';
+import React, { createContext, useState, useContext, useCallback, useEffect } from 'react';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 
 export type PixKeyType = 'cpf' | 'phone' | 'email' | 'random';
 export type AccountType = 'corrente' | 'poupanca';
@@ -32,9 +33,15 @@ interface BankContextData {
   getPixKeyById: (id: string) => PixKey | undefined;
   updateBankAccount: (account: BankAccount) => void;
   hasBankAccount: boolean;
+  loading: boolean;
 }
 
 const BankContext = createContext<BankContextData>({} as BankContextData);
+
+const STORAGE_KEYS = {
+  PIX_KEYS: '@entregador:bank:pixkeys',
+  BANK_ACCOUNT: '@entregador:bank:account',
+};
 
 // Dados mockados iniciais
 const mockPixKeys: PixKey[] = [
@@ -66,12 +73,67 @@ const mockBankAccount: BankAccount = {
 export const BankProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [pixKeys, setPixKeys] = useState<PixKey[]>(mockPixKeys);
   const [bankAccount, setBankAccount] = useState<BankAccount | null>(mockBankAccount);
+  const [loading, setLoading] = useState(true);
 
   const defaultPixKey = pixKeys.find(pk => pk.isDefault) || null;
   const hasBankAccount = !!bankAccount;
 
+  // Carregar dados ao iniciar
+  useEffect(() => {
+    loadBankData();
+  }, []);
+
+  const loadBankData = async () => {
+    try {
+      const [storedPixKeys, storedBankAccount] = await Promise.all([
+        AsyncStorage.getItem(STORAGE_KEYS.PIX_KEYS),
+        AsyncStorage.getItem(STORAGE_KEYS.BANK_ACCOUNT),
+      ]);
+
+      if (storedPixKeys) {
+        const parsedPixKeys = JSON.parse(storedPixKeys);
+        // Reconverte as datas
+        const pixKeysWithDates = parsedPixKeys.map((pk: any) => ({
+          ...pk,
+          createdAt: new Date(pk.createdAt),
+        }));
+        setPixKeys(pixKeysWithDates);
+      }
+
+      if (storedBankAccount) {
+        setBankAccount(JSON.parse(storedBankAccount));
+      }
+    } catch (error) {
+      console.error('Erro ao carregar dados bancários:', error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const savePixKeys = async (newPixKeys: PixKey[]) => {
+    try {
+      await AsyncStorage.setItem(STORAGE_KEYS.PIX_KEYS, JSON.stringify(newPixKeys));
+      setPixKeys(newPixKeys);
+    } catch (error) {
+      console.error('Erro ao salvar chaves PIX:', error);
+    }
+  };
+
+  const saveBankAccount = async (account: BankAccount | null) => {
+    try {
+      if (account) {
+        await AsyncStorage.setItem(STORAGE_KEYS.BANK_ACCOUNT, JSON.stringify(account));
+      } else {
+        await AsyncStorage.removeItem(STORAGE_KEYS.BANK_ACCOUNT);
+      }
+      setBankAccount(account);
+    } catch (error) {
+      console.error('Erro ao salvar conta bancária:', error);
+    }
+  };
+
   const updateBankAccount = useCallback((account: BankAccount) => {
-    setBankAccount(account);
+    saveBankAccount(account);
   }, []);
 
   const addPixKey = useCallback((type: PixKeyType, key: string, isDefault: boolean = false) => {
@@ -90,14 +152,11 @@ export const BankProvider: React.FC<{ children: React.ReactNode }> = ({ children
         createdAt: new Date(),
       };
 
-      setPixKeys(prev => {
-        // Se a nova chave for padrão, remove o padrão das outras
-        if (isDefault) {
-          return [newPixKey, ...prev.map(pk => ({ ...pk, isDefault: false }))];
-        }
-        return [newPixKey, ...prev];
-      });
+      const updatedKeys = isDefault
+        ? [newPixKey, ...pixKeys.map(pk => ({ ...pk, isDefault: false }))]
+        : [newPixKey, ...pixKeys];
 
+      savePixKeys(updatedKeys);
       return true;
     } catch (error) {
       console.error('Erro ao adicionar chave PIX:', error);
@@ -113,10 +172,8 @@ export const BankProvider: React.FC<{ children: React.ReactNode }> = ({ children
         return false;
       }
 
-      setPixKeys(prev =>
-        prev.map(pk => (pk.id === id ? { ...pk, key } : pk))
-      );
-
+      const updatedKeys = pixKeys.map(pk => (pk.id === id ? { ...pk, key } : pk));
+      savePixKeys(updatedKeys);
       return true;
     } catch (error) {
       console.error('Erro ao atualizar chave PIX:', error);
@@ -133,17 +190,14 @@ export const BankProvider: React.FC<{ children: React.ReactNode }> = ({ children
         return false;
       }
 
-      setPixKeys(prev => {
-        const updated = prev.filter(pk => pk.id !== id);
-        
-        // Se deletou a chave padrão, define a primeira como padrão
-        if (pixKey?.isDefault && updated.length > 0) {
-          updated[0].isDefault = true;
-        }
-        
-        return updated;
-      });
+      let updatedKeys = pixKeys.filter(pk => pk.id !== id);
+      
+      // Se deletou a chave padrão, define a primeira como padrão
+      if (pixKey?.isDefault && updatedKeys.length > 0) {
+        updatedKeys[0].isDefault = true;
+      }
 
+      savePixKeys(updatedKeys);
       return true;
     } catch (error) {
       console.error('Erro ao deletar chave PIX:', error);
@@ -152,10 +206,9 @@ export const BankProvider: React.FC<{ children: React.ReactNode }> = ({ children
   }, [pixKeys]);
 
   const setDefaultPixKey = useCallback((id: string) => {
-    setPixKeys(prev =>
-      prev.map(pk => ({ ...pk, isDefault: pk.id === id }))
-    );
-  }, []);
+    const updatedKeys = pixKeys.map(pk => ({ ...pk, isDefault: pk.id === id }));
+    savePixKeys(updatedKeys);
+  }, [pixKeys]);
 
   const getPixKeyById = useCallback((id: string) => {
     return pixKeys.find(pk => pk.id === id);
@@ -174,6 +227,7 @@ export const BankProvider: React.FC<{ children: React.ReactNode }> = ({ children
         getPixKeyById,
         updateBankAccount,
         hasBankAccount,
+        loading,
       }}
     >
       {children}
