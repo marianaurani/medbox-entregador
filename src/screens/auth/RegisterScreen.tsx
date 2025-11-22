@@ -10,6 +10,7 @@ import {
   ScrollView,
   ActivityIndicator,
   StatusBar,
+  Platform,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
@@ -54,7 +55,6 @@ const RegisterScreen: React.FC<Props> = ({ navigation }) => {
   };
 
   const handleContinue = () => {
-    // Validações
     if (!formData.name.trim()) {
       Alert.alert('Atenção', 'Digite seu nome completo');
       return;
@@ -68,7 +68,6 @@ const RegisterScreen: React.FC<Props> = ({ navigation }) => {
       return;
     }
 
-    // Navega para tela de seleção de método
     navigation.navigate('VerificationMethod', {
       email: formData.email || 'seu e-mail',
       phone: formData.phone,
@@ -76,26 +75,28 @@ const RegisterScreen: React.FC<Props> = ({ navigation }) => {
   };
 
   return (
-    <SafeAreaView style={styles.container}>
+    <SafeAreaView style={styles.container} edges={['top', 'bottom']}>
       <StatusBar barStyle="dark-content" backgroundColor={colors.backgroundLight} />
       
+      {/* Header Padronizado */}
+      <View style={styles.header}>
+        <TouchableOpacity 
+          onPress={() => navigation.goBack()}
+          style={styles.backButton}
+          disabled={loading}
+        >
+          <Ionicons name="arrow-back" size={24} color={colors.text} />
+        </TouchableOpacity>
+        <Text style={styles.headerTitle}>Cadastro</Text>
+        <View style={{ width: 24 }} />
+      </View>
+
       <ScrollView 
         style={styles.scrollView}
         contentContainerStyle={styles.scrollContent}
         keyboardShouldPersistTaps="handled"
         showsVerticalScrollIndicator={false}
       >
-        <View style={styles.header}>
-          <TouchableOpacity 
-            onPress={() => navigation.goBack()}
-            style={styles.backButton}
-          >
-            <Ionicons name="arrow-back" size={24} color={colors.text} />
-          </TouchableOpacity>
-          <Text style={styles.headerTitle}>Cadastro</Text>
-          <View style={{ width: 24 }} />
-        </View>
-
         <View style={styles.titleContainer}>
           <Text style={styles.title}>Crie sua conta</Text>
           <Text style={styles.subtitle}>
@@ -163,12 +164,12 @@ const RegisterScreen: React.FC<Props> = ({ navigation }) => {
             Ao continuar, você concorda com os 
             <Text style={styles.termsLink}> Termos e Condições de uso.</Text>
           </Text>
-
         </View>
 
         <View style={{ height: 120 }} />
       </ScrollView>
 
+      {/* Footer Padronizado */}
       <View style={styles.footer}>
         <TouchableOpacity 
           style={[styles.button, loading && styles.buttonDisabled]}
@@ -191,19 +192,13 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: colors.backgroundLight,
   },
-  scrollView: {
-    flex: 1,
-  },
-  scrollContent: {
-    paddingBottom: 120,
-  },
   header: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    paddingTop: 20,
     paddingHorizontal: 20,
-    paddingBottom: 20,
+    paddingVertical: 20,
+    backgroundColor: colors.backgroundLight,
   },
   backButton: {
     padding: 4,
@@ -213,8 +208,13 @@ const styles = StyleSheet.create({
     fontWeight: '600',
     color: colors.text,
   },
-  titleContainer: {
+  scrollView: {
+    flex: 1,
+  },
+  scrollContent: {
     paddingHorizontal: 20,
+  },
+  titleContainer: {
     paddingBottom: 30,
   },
   title: {
@@ -229,7 +229,6 @@ const styles = StyleSheet.create({
     lineHeight: 20,
   },
   form: {
-    paddingHorizontal: 20,
     gap: 20,
   },
   inputGroup: {
@@ -272,7 +271,7 @@ const styles = StyleSheet.create({
     backgroundColor: colors.backgroundLight,
     paddingHorizontal: 20,
     paddingTop: 15,
-    paddingBottom: 35,
+    paddingBottom: Platform.OS === 'ios' ? 0 : 15,
     borderTopWidth: 1,
     borderTopColor: colors.border,
   },

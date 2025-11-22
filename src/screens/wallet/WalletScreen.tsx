@@ -49,13 +49,26 @@ const WalletScreen: React.FC = () => {
     return `R$ ${Math.abs(value).toFixed(2).replace('.', ',')}`;
   };
 
-  const formatDate = (date: Date) => {
-    return date.toLocaleDateString('pt-BR', {
-      day: '2-digit',
-      month: 'short',
-      hour: '2-digit',
-      minute: '2-digit',
-    });
+  const formatDate = (date: Date | string) => {
+    try {
+      // Converte string para Date se necessário
+      const dateObj = typeof date === 'string' ? new Date(date) : date;
+      
+      // Verifica se é uma data válida
+      if (!dateObj || isNaN(dateObj.getTime())) {
+        return 'Data inválida';
+      }
+      
+      return dateObj.toLocaleDateString('pt-BR', {
+        day: '2-digit',
+        month: 'short',
+        hour: '2-digit',
+        minute: '2-digit',
+      });
+    } catch (error) {
+      console.error('Erro ao formatar data:', error);
+      return 'Data inválida';
+    }
   };
 
   const getTransactionIcon = (type: string) => {

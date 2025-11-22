@@ -9,6 +9,8 @@ import {
   ActivityIndicator,
   StatusBar,
   Image,
+  ScrollView,
+  Platform,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
@@ -53,7 +55,7 @@ const CNHUploadScreen: React.FC<Props> = ({ navigation }) => {
 
     try {
       const result = await ImagePicker.launchCameraAsync({
-        mediaTypes: ImagePicker.MediaTypeOptions.Images,
+        mediaTypes: ['images'],
         allowsEditing: true,
         aspect: [16, 10],
         quality: 0.9,
@@ -73,7 +75,7 @@ const CNHUploadScreen: React.FC<Props> = ({ navigation }) => {
 
     try {
       const result = await ImagePicker.launchImageLibraryAsync({
-        mediaTypes: ImagePicker.MediaTypeOptions.Images,
+        mediaTypes: ['images'],
         allowsEditing: true,
         aspect: [16, 10],
         quality: 0.9,
@@ -95,7 +97,6 @@ const CNHUploadScreen: React.FC<Props> = ({ navigation }) => {
 
     try {
       setLoading(true);
-      // Simula upload e processamento da CNH
       await new Promise(resolve => setTimeout(resolve, 2000));
       navigation.navigate('RegistrationComplete');
     } catch (error: any) {
@@ -106,7 +107,7 @@ const CNHUploadScreen: React.FC<Props> = ({ navigation }) => {
   };
 
   return (
-    <SafeAreaView style={styles.container}>
+    <SafeAreaView style={styles.container} edges={['top', 'bottom']}>
       <StatusBar barStyle="dark-content" backgroundColor={colors.backgroundLight} />
 
       {/* Header */}
@@ -114,6 +115,7 @@ const CNHUploadScreen: React.FC<Props> = ({ navigation }) => {
         <TouchableOpacity
           onPress={() => navigation.goBack()}
           style={styles.backButton}
+          disabled={loading}
         >
           <Ionicons name="arrow-back" size={24} color={colors.text} />
         </TouchableOpacity>
@@ -121,11 +123,25 @@ const CNHUploadScreen: React.FC<Props> = ({ navigation }) => {
         <View style={{ width: 24 }} />
       </View>
 
-      {/* Conteúdo */}
-      <View style={styles.content}>
-        <View style={styles.iconContainer}>
+      {/* Conteúdo com Scroll */}
+      <ScrollView
+        style={styles.scrollView}
+        contentContainerStyle={styles.scrollContent}
+        showsVerticalScrollIndicator={false}
+      >
+        {/* Preview da CNH */}
+        <View style={styles.photoContainer}>
           {cnhPhoto ? (
-            <Image source={{ uri: cnhPhoto }} style={styles.photoPreview} />
+            <View style={styles.photoWrapper}>
+              <Image source={{ uri: cnhPhoto }} style={styles.photoPreview} />
+              <TouchableOpacity
+                style={styles.removePhotoButton}
+                onPress={() => setCnhPhoto(null)}
+                disabled={loading}
+              >
+                <Ionicons name="close-circle" size={32} color={colors.error || '#F44336'} />
+              </TouchableOpacity>
+            </View>
           ) : (
             <View style={styles.placeholderContainer}>
               <Ionicons name="card" size={60} color={colors.textSecondary} />
@@ -165,7 +181,7 @@ const CNHUploadScreen: React.FC<Props> = ({ navigation }) => {
           </TouchableOpacity>
         </View>
 
-        {/* Avisos importantes */}
+        {/* Aviso importante */}
         <View style={styles.warningContainer}>
           <Ionicons name="information-circle" size={20} color={colors.primary} />
           <Text style={styles.warningText}>
@@ -181,12 +197,18 @@ const CNHUploadScreen: React.FC<Props> = ({ navigation }) => {
           <Text style={styles.tip}>✓ Boa iluminação, sem reflexos</Text>
           <Text style={styles.tip}>✓ Foto nítida e sem cortes</Text>
         </View>
-      </View>
 
-      {/* Botão */}
+        {/* Espaço extra */}
+        <View style={{ height: 120 }} />
+      </ScrollView>
+
+      {/* Botão Fixo */}
       <View style={styles.footer}>
         <TouchableOpacity
-          style={[styles.button, loading && styles.buttonDisabled]}
+          style={[
+            styles.button,
+            (loading || !cnhPhoto) && styles.buttonDisabled
+          ]}
           onPress={handleContinue}
           disabled={loading || !cnhPhoto}
         >
@@ -211,7 +233,8 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'space-between',
     paddingHorizontal: 20,
-    paddingBottom: 20,
+    paddingVertical: 20,
+    backgroundColor: colors.backgroundLight,
   },
   backButton: {
     padding: 4,
@@ -221,19 +244,25 @@ const styles = StyleSheet.create({
     fontWeight: '600',
     color: colors.text,
   },
-  content: {
+  scrollView: {
     flex: 1,
+  },
+  scrollContent: {
     paddingHorizontal: 20,
   },
-  iconContainer: {
+  photoContainer: {
     alignItems: 'center',
-    marginVertical: 24,
+    marginTop: 20,
+    marginBottom: 24,
+  },
+  photoWrapper: {
+    position: 'relative',
   },
   placeholderContainer: {
     width: 280,
     height: 180,
     borderRadius: 12,
-    backgroundColor: colors.border,
+    backgroundColor: colors.border + '40',
     alignItems: 'center',
     justifyContent: 'center',
     borderWidth: 2,
@@ -253,8 +282,15 @@ const styles = StyleSheet.create({
     borderWidth: 2,
     borderColor: colors.primary,
   },
+  removePhotoButton: {
+    position: 'absolute',
+    top: -10,
+    right: -10,
+    backgroundColor: colors.backgroundLight,
+    borderRadius: 16,
+  },
   title: {
-    fontSize: 24,
+    fontSize: 22,
     fontWeight: 'bold',
     color: colors.text,
     textAlign: 'center',
@@ -266,6 +302,7 @@ const styles = StyleSheet.create({
     textAlign: 'center',
     marginBottom: 24,
     lineHeight: 20,
+    paddingHorizontal: 10,
   },
   actionButtons: {
     flexDirection: 'row',
@@ -275,7 +312,7 @@ const styles = StyleSheet.create({
   actionButton: {
     flex: 1,
     alignItems: 'center',
-    padding: 20,
+    padding: 16,
     backgroundColor: colors.backgroundLight,
     borderWidth: 1,
     borderColor: colors.border,
@@ -288,12 +325,13 @@ const styles = StyleSheet.create({
     backgroundColor: colors.primary + '15',
     alignItems: 'center',
     justifyContent: 'center',
-    marginBottom: 12,
+    marginBottom: 10,
   },
   actionButtonText: {
     fontSize: 14,
     fontWeight: '600',
     color: colors.text,
+    textAlign: 'center',
   },
   warningContainer: {
     flexDirection: 'row',
@@ -327,13 +365,15 @@ const styles = StyleSheet.create({
     fontSize: 13,
     color: colors.textSecondary,
     marginBottom: 4,
+    lineHeight: 18,
   },
   footer: {
+    backgroundColor: colors.backgroundLight,
     paddingHorizontal: 20,
-    paddingBottom: 40,
+    paddingTop: 15,
+    paddingBottom: Platform.OS === 'ios' ? 0 : 15,
     borderTopWidth: 1,
     borderTopColor: colors.border,
-    paddingTop: 15,
   },
   button: {
     backgroundColor: colors.buttonSecondary,

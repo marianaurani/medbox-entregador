@@ -12,6 +12,7 @@ import {
   ActivityIndicator,
   ScrollView,
   Keyboard,
+  StatusBar,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
@@ -28,7 +29,6 @@ const LoginScreen: React.FC<Props> = ({ navigation }) => {
   const [loading, setLoading] = useState(false);
   
   const scrollViewRef = useRef<ScrollView>(null);
-  const inputRef = useRef<TextInput>(null);
 
   const formatCPF = (text: string) => {
     const numbers = text.replace(/\D/g, '');
@@ -67,64 +67,67 @@ const LoginScreen: React.FC<Props> = ({ navigation }) => {
   };
 
   return (
-    <SafeAreaView style={styles.container}>
+    <SafeAreaView style={styles.container} edges={['top', 'bottom']}>
+      <StatusBar barStyle="dark-content" backgroundColor={colors.backgroundLight} />
+      
       <KeyboardAvoidingView 
         style={styles.keyboardView}
         behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
         keyboardVerticalOffset={0}
       >
+        {/* Header Padronizado */}
+        <View style={styles.header}>
+          <TouchableOpacity 
+            onPress={() => navigation.goBack()}
+            style={styles.backButton}
+            disabled={loading}
+          >
+            <Ionicons name="arrow-back" size={24} color={colors.text} />
+          </TouchableOpacity>
+          <Text style={styles.headerTitle}>Trocar de conta</Text>
+          <View style={{ width: 24 }} />
+        </View>
+
         <ScrollView 
           ref={scrollViewRef}
+          style={styles.scrollView}
           contentContainerStyle={styles.scrollContent}
           keyboardShouldPersistTaps="handled"
           showsVerticalScrollIndicator={false}
         >
-          <View style={styles.header}>
-            <TouchableOpacity 
-              onPress={() => navigation.goBack()}
-              style={styles.backButton}
-            >
-              <Ionicons name="arrow-back" size={24} color={colors.text} />
-            </TouchableOpacity>
-            <Text style={styles.headerTitle}>Trocar de conta</Text>
-            <View style={{ width: 24 }} />
+          <View style={styles.iconContainer}>
+            <Ionicons name="person-circle-outline" size={80} color={colors.primary} />
           </View>
 
-          <View style={styles.content}>
-            <View style={styles.iconContainer}>
-              <Ionicons name="person-circle-outline" size={80} color={colors.primary} />
+          <Text style={styles.title}>Acessar outra conta</Text>
+          <Text style={styles.subtitle}>
+            Digite o CPF cadastrado para acessar
+          </Text>
+
+          <View style={styles.form}>
+            <View style={styles.inputGroup}>
+              <Text style={styles.label}>CPF</Text>
+              <TextInput
+                style={styles.input}
+                placeholder="000.000.000-00"
+                value={cpf}
+                onChangeText={(text) => setCpf(formatCPF(text))}
+                keyboardType="numeric"
+                maxLength={14}
+                editable={!loading}
+                onFocus={handleInputFocus}
+              />
             </View>
 
-            <Text style={styles.title}>Acessar outra conta</Text>
-            <Text style={styles.subtitle}>
-              Digite o CPF cadastrado para acessar
+            <Text style={styles.info}>
+              ℹ️ Caso não tenha cadastro, crie uma nova conta primeiro.
             </Text>
-
-            <View style={styles.form}>
-              <View style={styles.inputGroup}>
-                <Text style={styles.label}>CPF</Text>
-                <TextInput
-                  ref={inputRef}
-                  style={styles.input}
-                  placeholder="000.000.000-00"
-                  value={cpf}
-                  onChangeText={(text) => setCpf(formatCPF(text))}
-                  keyboardType="numeric"
-                  maxLength={14}
-                  editable={!loading}
-                  onFocus={handleInputFocus}
-                />
-              </View>
-
-              <Text style={styles.info}>
-                ℹ️ Caso não tenha cadastro, crie uma nova conta primeiro.
-              </Text>
-            </View>
           </View>
 
           <View style={{ height: 200 }} />
         </ScrollView>
 
+        {/* Footer Padronizado */}
         <View style={styles.footer}>
           <TouchableOpacity 
             style={[styles.button, loading && styles.buttonDisabled]}
@@ -143,7 +146,7 @@ const LoginScreen: React.FC<Props> = ({ navigation }) => {
             onPress={() => navigation.navigate('Register')}
             disabled={loading}
           >
-            <Text>
+            <Text style={styles.registerButtonText}>
               Não tem conta? <Text style={styles.registerLink}>Cadastre-se</Text>
             </Text>
           </TouchableOpacity>
@@ -161,16 +164,13 @@ const styles = StyleSheet.create({
   keyboardView: {
     flex: 1,
   },
-  scrollContent: {
-    flexGrow: 1,
-  },
   header: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    paddingTop: 20,
     paddingHorizontal: 20,
-    paddingBottom: 20,
+    paddingVertical: 20,
+    backgroundColor: colors.backgroundLight,
   },
   backButton: {
     padding: 4,
@@ -180,7 +180,10 @@ const styles = StyleSheet.create({
     fontWeight: '600',
     color: colors.text,
   },
-  content: {
+  scrollView: {
+    flex: 1,
+  },
+  scrollContent: {
     paddingHorizontal: 20,
   },
   iconContainer: {
@@ -210,7 +213,7 @@ const styles = StyleSheet.create({
     fontSize: 14,
     color: colors.text,
     marginBottom: 8,
-    fontWeight: '500',
+    fontWeight: '600',
   },
   input: {
     backgroundColor: colors.backgroundLight,
@@ -236,7 +239,7 @@ const styles = StyleSheet.create({
     backgroundColor: colors.backgroundLight,
     paddingHorizontal: 20,
     paddingTop: 15,
-    paddingBottom: 35,
+    paddingBottom: Platform.OS === 'ios' ? 0 : 15,
     borderTopWidth: 1,
     borderTopColor: colors.border,
   },

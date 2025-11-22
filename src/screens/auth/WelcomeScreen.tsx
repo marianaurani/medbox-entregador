@@ -8,6 +8,7 @@ import {
   Image,
   Dimensions,
   StatusBar,
+  Platform,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
@@ -20,7 +21,7 @@ const { width, height } = Dimensions.get('window');
 
 const WelcomeScreen: React.FC<Props> = ({ navigation }) => {
   return (
-    <SafeAreaView style={styles.container}>
+    <View style={styles.container}>
       <StatusBar barStyle="dark-content" backgroundColor={colors.backgroundLight} />
       
       {/* Ilustração */}
@@ -31,37 +32,39 @@ const WelcomeScreen: React.FC<Props> = ({ navigation }) => {
       />
 
       {/* Conteúdo com efeito de sobreposição */}
-      <View style={styles.overlayContainer}>
-        <View style={styles.content}>
-          <Text style={styles.title}>
-            Boas-vindas ao MedBox para entregadores
-          </Text>
-          
-          <Text style={styles.subtitle}>
-            Entre para a família MedBox e transforme suas entregas em saúde para milhares de pessoas. 
-            Ganhe de forma justa, trabalhe com flexibilidade e faça parte de uma rede que conecta farmácias 
-            e clientes por todo o Brasil.
-          </Text>
-        </View>
+      <SafeAreaView style={styles.safeArea} edges={['bottom']}>
+        <View style={styles.overlayContainer}>
+          <View style={styles.content}>
+            <Text style={styles.title}>
+              Boas-vindas ao MedBox para entregadores
+            </Text>
+            
+            <Text style={styles.subtitle}>
+              Entre para a família MedBox e transforme suas entregas em saúde para milhares de pessoas. 
+              Ganhe de forma justa, trabalhe com flexibilidade e faça parte de uma rede que conecta farmácias 
+              e clientes por todo o Brasil.
+            </Text>
+          </View>
 
-        {/* Botões */}
-        <View style={styles.footer}>
-          <TouchableOpacity 
-            style={styles.buttonPrimary}
-            onPress={() => navigation.navigate('Register')}
-          >
-            <Text style={styles.buttonPrimaryText}>Cadastrar</Text>
-          </TouchableOpacity>
+          {/* Botões Padronizados */}
+          <View style={styles.footer}>
+            <TouchableOpacity 
+              style={styles.buttonPrimary}
+              onPress={() => navigation.navigate('Register')}
+            >
+              <Text style={styles.buttonPrimaryText}>Cadastrar</Text>
+            </TouchableOpacity>
 
-          <TouchableOpacity 
-            style={styles.buttonSecondary}
-            onPress={() => navigation.navigate('Login')}
-          >
-            <Text style={styles.buttonSecondaryText}>Já tenho conta</Text>
-          </TouchableOpacity>
+            <TouchableOpacity 
+              style={styles.buttonSecondary}
+              onPress={() => navigation.navigate('Login')}
+            >
+              <Text style={styles.buttonSecondaryText}>Já tenho conta</Text>
+            </TouchableOpacity>
+          </View>
         </View>
-      </View>
-    </SafeAreaView>
+      </SafeAreaView>
+    </View>
   );
 };
 
@@ -72,13 +75,16 @@ const styles = StyleSheet.create({
   },
   illustration: {
     width: width,
-    height: height * 0.45, // 45% da altura
+    height: height * 0.45,
     position: 'absolute',
     top: 0,
   },
+  safeArea: {
+    flex: 1,
+    marginTop: height * 0.40,
+  },
   overlayContainer: {
     flex: 1,
-    marginTop: height * 0.40, // Começa em 40%
     backgroundColor: colors.backgroundLight,
     borderTopLeftRadius: 24,
     borderTopRightRadius: 24,
@@ -112,7 +118,7 @@ const styles = StyleSheet.create({
   },
   footer: {
     paddingHorizontal: 20,
-    paddingBottom: 40,
+    paddingBottom: Platform.OS === 'ios' ? 0 : 20,
     gap: 12,
   },
   buttonPrimary: {

@@ -237,7 +237,7 @@ const VehicleSelectionScreen: React.FC<Props> = ({ navigation }) => {
           ) : (
             <>
               <Text style={styles.buttonText}>Continuar</Text>
-              <Ionicons name="arrow-forward" size={20} color={colors.text} />
+              {/* <Ionicons name="arrow-forward" size={20} color={colors.text} /> */}
             </>
           )}
         </TouchableOpacity>

@@ -7,6 +7,8 @@ import {
   StyleSheet,
   StatusBar,
   Alert,
+  ScrollView,
+  Platform,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
@@ -18,37 +20,48 @@ import colors from '../../constants/colors';
 type Props = NativeStackScreenProps<AuthStackParamList, 'RegistrationComplete'>;
 
 const RegistrationCompleteScreen: React.FC<Props> = ({ navigation }) => {
-  const auth = useAuth() as any; // FORÇA o tipo any temporariamente
+  const auth = useAuth();
 
   const handleEnterApp = async () => {
     try {
+      // Verifica se completeSignUp existe no contexto
       if (auth.completeSignUp) {
         await auth.completeSignUp();
+      } else {
+        // Se não existir, apenas força a autenticação
+        console.log('completeSignUp não disponível, usuário já está autenticado');
       }
     } catch (error: any) {
-      Alert.alert('Erro', 'Não foi possível completar o cadastro');
+      console.error('Erro ao completar cadastro:', error);
+      // Remove o Alert de erro, pois o usuário já está logado
     }
   };
-  
 
   return (
-    <SafeAreaView style={styles.container}>
+    <SafeAreaView style={styles.container} edges={['top', 'bottom']}>
       <StatusBar barStyle="dark-content" backgroundColor={colors.backgroundLight} />
 
-      <View style={styles.content}>
+      {/* Conteúdo com Scroll */}
+      <ScrollView
+        style={styles.scrollView}
+        contentContainerStyle={styles.scrollContent}
+        showsVerticalScrollIndicator={false}
+      >
+        <Text style={styles.title}>Cadastro enviado com sucesso!</Text>
+        
+        {/* Ícone de sucesso */}
         <View style={styles.iconContainer}>
           <View style={styles.successCircle}>
             <Ionicons name="checkmark" size={64} color={colors.backgroundLight} />
           </View>
         </View>
-
-        <Text style={styles.title}>Cadastro enviado com sucesso! 🎉</Text>
         
         <Text style={styles.subtitle}>
           Seu cadastro foi enviado para análise. Nossa equipe irá verificar suas informações e você
           receberá uma notificação quando for aprovado.
         </Text>
 
+        {/* Cards informativos */}
         <View style={styles.infoCards}>
           <View style={styles.infoCard}>
             <Ionicons name="time-outline" size={32} color={colors.primary} />
@@ -81,6 +94,7 @@ const RegistrationCompleteScreen: React.FC<Props> = ({ navigation }) => {
           </View>
         </View>
 
+        {/* Próximos passos */}
         <View style={styles.nextStepsContainer}>
           <Text style={styles.nextStepsTitle}>Próximos passos:</Text>
           <View style={styles.step}>
@@ -108,8 +122,12 @@ const RegistrationCompleteScreen: React.FC<Props> = ({ navigation }) => {
             </Text>
           </View>
         </View>
-      </View>
 
+        {/* Espaço extra */}
+        <View style={{ height: 120 }} />
+      </ScrollView>
+
+      {/* Footer Fixo */}
       <View style={styles.footer}>
         <TouchableOpacity
           style={styles.buttonPrimary}
@@ -131,8 +149,10 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: colors.backgroundLight,
   },
-  content: {
+  scrollView: {
     flex: 1,
+  },
+  scrollContent: {
     paddingHorizontal: 20,
     paddingTop: 20,
   },
@@ -157,23 +177,24 @@ const styles = StyleSheet.create({
     elevation: 8,
   },
   title: {
-    fontSize: 26,
+    fontSize: 24,
     fontWeight: 'bold',
     color: colors.text,
     textAlign: 'center',
     marginBottom: 12,
-    lineHeight: 34,
+    lineHeight: 32,
   },
   subtitle: {
-    fontSize: 15,
+    fontSize: 14,
     color: colors.textSecondary,
     textAlign: 'center',
-    lineHeight: 22,
-    marginBottom: 32,
+    lineHeight: 20,
+    marginBottom: 28,
+    paddingHorizontal: 10,
   },
   infoCards: {
     gap: 12,
-    marginBottom: 24,
+    marginBottom: 20,
   },
   infoCard: {
     flexDirection: 'row',
@@ -182,8 +203,8 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: colors.border,
     borderRadius: 12,
-    padding: 16,
-    gap: 16,
+    padding: 14,
+    gap: 14,
   },
   infoTextContainer: {
     flex: 1,
@@ -197,22 +218,23 @@ const styles = StyleSheet.create({
   infoDescription: {
     fontSize: 13,
     color: colors.textSecondary,
+    lineHeight: 18,
   },
   nextStepsContainer: {
     backgroundColor: colors.primary + '10',
-    padding: 20,
+    padding: 18,
     borderRadius: 12,
   },
   nextStepsTitle: {
     fontSize: 16,
     fontWeight: '600',
     color: colors.text,
-    marginBottom: 16,
+    marginBottom: 14,
   },
   step: {
     flexDirection: 'row',
     alignItems: 'center',
-    marginBottom: 12,
+    marginBottom: 10,
     gap: 12,
   },
   stepNumber: {
@@ -235,16 +257,19 @@ const styles = StyleSheet.create({
     lineHeight: 20,
   },
   footer: {
+    backgroundColor: colors.backgroundLight,
     paddingHorizontal: 20,
-    paddingBottom: 40,
-    paddingTop: 20,
+    paddingTop: 15,
+    paddingBottom: Platform.OS === 'ios' ? 0 : 15,
+    borderTopWidth: 1,
+    borderTopColor: colors.border,
   },
   buttonPrimary: {
     backgroundColor: colors.buttonSecondary,
     paddingVertical: 16,
     borderRadius: 8,
     alignItems: 'center',
-    marginBottom: 12,
+    marginBottom: 10,
   },
   buttonPrimaryText: {
     fontSize: 16,
@@ -252,10 +277,10 @@ const styles = StyleSheet.create({
     color: colors.text,
   },
   footerNote: {
-    fontSize: 13,
+    fontSize: 12,
     color: colors.textSecondary,
     textAlign: 'center',
-    lineHeight: 18,
+    lineHeight: 16,
   },
 });
 

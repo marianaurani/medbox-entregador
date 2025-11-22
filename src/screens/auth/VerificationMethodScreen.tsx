@@ -7,6 +7,7 @@ import {
   StyleSheet,
   StatusBar,
   ActivityIndicator,
+  Platform,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
@@ -23,7 +24,6 @@ const VerificationMethodScreen: React.FC<Props> = ({ navigation, route }) => {
   const handleSelectMethod = async (method: 'email' | 'sms') => {
     try {
       setLoading(true);
-      // Simula envio do código
       await new Promise(resolve => setTimeout(resolve, 1000));
       
       navigation.navigate('SecurityCode', {
@@ -38,10 +38,10 @@ const VerificationMethodScreen: React.FC<Props> = ({ navigation, route }) => {
   };
 
   return (
-    <SafeAreaView style={styles.container}>
+    <SafeAreaView style={styles.container} edges={['top', 'bottom']}>
       <StatusBar barStyle="dark-content" backgroundColor={colors.backgroundLight} />
 
-      {/* Header */}
+      {/* Header Padronizado */}
       <View style={styles.header}>
         <TouchableOpacity
           onPress={() => navigation.goBack()}
@@ -51,6 +51,7 @@ const VerificationMethodScreen: React.FC<Props> = ({ navigation, route }) => {
           <Ionicons name="arrow-back" size={24} color={colors.text} />
         </TouchableOpacity>
         <Text style={styles.headerTitle}>MEDBOX PARA ENTREGADORES</Text>
+        <View style={{ width: 24 }} />
       </View>
 
       {/* Conteúdo */}
@@ -122,15 +123,14 @@ const styles = StyleSheet.create({
     backgroundColor: colors.backgroundLight,
   },
   header: {
-    paddingTop: 20,
-    paddingHorizontal: 20,
-    paddingBottom: 20,
+    flexDirection: 'row',
     alignItems: 'center',
+    justifyContent: 'space-between',
+    paddingHorizontal: 20,
+    paddingVertical: 20,
+    backgroundColor: colors.backgroundLight,
   },
   backButton: {
-    position: 'absolute',
-    left: 20,
-    top: 20,
     padding: 4,
   },
   headerTitle: {

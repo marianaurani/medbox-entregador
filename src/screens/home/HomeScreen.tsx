@@ -86,72 +86,82 @@ const HomeScreen: React.FC = () => {
             longitudeDelta: 0.0421,
           }}
         >
-          {/* Marcador da posição do entregador */}
-          <Marker coordinate={delivererLocation}>
-            <View style={styles.delivererMarker}>
-              <Ionicons name="bicycle" size={20} color="white" />
-            </View>
-          </Marker>
-
-          {/* Círculo de área de cobertura do entregador */}
+          {/* ZONAS DE CALOR - Renderizadas primeiro (camada de baixo) */}
+          
+          {/* Círculo de área de cobertura do entregador - Base */}
           <Circle
             center={delivererLocation}
             radius={3000}
             strokeColor="rgba(0, 203, 169, 0.3)"
-            fillColor="rgba(0, 203, 169, 0.1)"
+            fillColor="rgba(0, 203, 169, 0.08)"
             strokeWidth={2}
           />
 
-          {/* Zonas Quentes - Alta Demanda (Vermelho) */}
+          {/* Zonas Quentes - Alta Demanda (Vermelho) - Asa Norte */}
           <Circle
-            center={{ latitude: -15.7441, longitude: -47.8826 }}
+            center={{ latitude: -15.7641, longitude: -47.8826 }}
             radius={1500}
-            strokeColor="rgba(244, 67, 54, 0.4)"
-            fillColor="rgba(244, 67, 54, 0.15)"
+            strokeColor="rgba(244, 67, 54, 0.5)"
+            fillColor="rgba(244, 67, 54, 0.2)"
             strokeWidth={2}
           />
 
-          {/* Zonas Quentes - Demanda Média (Laranja) */}
+          {/* Zonas Quentes - Demanda Média (Laranja) - Taguatinga */}
           <Circle
-            center={{ latitude: -15.8267, longitude: -47.9218 }}
+            center={{ latitude: -15.8367, longitude: -47.9318 }}
             radius={1200}
-            strokeColor="rgba(255, 152, 0, 0.4)"
-            fillColor="rgba(255, 152, 0, 0.12)"
+            strokeColor="rgba(255, 152, 0, 0.5)"
+            fillColor="rgba(255, 152, 0, 0.15)"
             strokeWidth={2}
           />
 
-          {/* Águas Claras */}
+          {/* Águas Claras - Demanda Média (Laranja) */}
           <Circle
             center={{ latitude: -15.8344, longitude: -48.0266 }}
             radius={1000}
-            strokeColor="rgba(255, 152, 0, 0.4)"
-            fillColor="rgba(255, 152, 0, 0.12)"
+            strokeColor="rgba(255, 152, 0, 0.5)"
+            fillColor="rgba(255, 152, 0, 0.15)"
             strokeWidth={2}
           />
 
-          {/* Zona de Baixa Demanda (Verde Claro) */}
+          {/* Zona de Baixa Demanda (Verde Claro) - Asa Sul */}
           <Circle
-            center={{ latitude: -15.7975, longitude: -47.9436 }}
-            radius={800}
-            strokeColor="rgba(76, 175, 80, 0.3)"
-            fillColor="rgba(76, 175, 80, 0.08)"
-            strokeWidth={1}
+            center={{ latitude: -15.8175, longitude: -47.9136 }}
+            radius={900}
+            strokeColor="rgba(76, 175, 80, 0.4)"
+            fillColor="rgba(76, 175, 80, 0.1)"
+            strokeWidth={2}
           />
 
+          {/* MARCADORES - Renderizados por último (sempre visíveis) */}
+          
           {/* Marcadores das farmácias com pedidos disponíveis */}
-          {availableDeliveries.map((delivery) => (
+          {availableDeliveries.map((delivery, index) => (
             <Marker
               key={delivery.id}
               coordinate={{
                 latitude: delivery.pharmacy.latitude,
                 longitude: delivery.pharmacy.longitude,
               }}
+              anchor={{ x: 0.5, y: 0.5 }}
+              tracksViewChanges={false}
             >
               <View style={styles.pharmacyMarker}>
-                <Ionicons name="storefront" size={16} color="white" />
+                <Ionicons name="storefront" size={18} color="white" />
               </View>
             </Marker>
           ))}
+
+          {/* Marcador da posição do entregador - Sempre no topo */}
+          <Marker 
+            coordinate={delivererLocation}
+            anchor={{ x: 0.5, y: 0.5 }}
+            tracksViewChanges={false}
+          >
+            <View style={styles.delivererMarker}>
+              <Ionicons name="bicycle" size={22} color="white" />
+            </View>
+          </Marker>
         </MapView>
 
         {/* Mini Badge de Ganhos - Topo Esquerdo */}
@@ -449,28 +459,32 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   delivererMarker: {
-    backgroundColor: colors.info,
-    padding: 10,
-    borderRadius: 25,
+    backgroundColor: '#2196F3',
+    padding: 12,
+    borderRadius: 30,
     borderWidth: 4,
     borderColor: 'white',
     shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.3,
-    shadowRadius: 4,
-    elevation: 5,
+    shadowOffset: { width: 0, height: 3 },
+    shadowOpacity: 0.4,
+    shadowRadius: 6,
+    elevation: 8,
+    alignItems: 'center',
+    justifyContent: 'center',
   },
   pharmacyMarker: {
     backgroundColor: colors.primary,
-    padding: 8,
-    borderRadius: 20,
+    padding: 10,
+    borderRadius: 24,
     borderWidth: 3,
     borderColor: 'white',
     shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.25,
-    shadowRadius: 3.84,
-    elevation: 5,
+    shadowOffset: { width: 0, height: 3 },
+    shadowOpacity: 0.35,
+    shadowRadius: 5,
+    elevation: 7,
+    alignItems: 'center',
+    justifyContent: 'center',
   },
   earningsBadge: {
     position: 'absolute',
