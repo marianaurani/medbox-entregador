@@ -1,8 +1,9 @@
-// src/contexts/BankContext.tsx
+// src/contexts/BankContext.tsx (CORRIGIDO - Tipos consistentes)
 import React, { createContext, useState, useContext, useCallback, useEffect } from 'react';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
-export type PixKeyType = 'cpf' | 'phone' | 'email' | 'random';
+// ✅ CORREÇÃO: Usa os mesmos tipos do types/index.ts
+export type PixKeyType = 'cpf' | 'telefone' | 'email' | 'aleatoria';
 export type AccountType = 'corrente' | 'poupanca';
 
 export interface PixKey {
@@ -54,7 +55,7 @@ const mockPixKeys: PixKey[] = [
   },
   {
     id: '2',
-    type: 'phone',
+    type: 'telefone', // ✅ CORRIGIDO
     key: '(61) 99999-8888',
     isDefault: false,
     createdAt: new Date('2024-02-20'),

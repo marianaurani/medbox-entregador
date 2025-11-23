@@ -110,7 +110,6 @@ const DeliveryListScreen: React.FC = () => {
   };
 
   const handleCardPress = (deliveryId: string, status: string) => {
-    // ✅ CORREÇÃO: Se for disponível, aceita direto ao clicar no card
     if (status === 'disponivel') {
       handleAcceptDelivery(deliveryId);
     } else if (status === 'aceito' || status === 'coletado' || status === 'em_rota') {
@@ -134,7 +133,6 @@ const DeliveryListScreen: React.FC = () => {
       <View style={styles.cardHeader}>
         <View style={styles.orderInfo}>
           <Text style={styles.orderId}>{item.orderId}</Text>
-          {/* ✅ CORREÇÃO: Badge só aparece se NÃO for disponível */}
           {item.status !== 'disponivel' && (
             <View style={[styles.statusBadge, { backgroundColor: getStatusColor(item.status) }]}>
               <Text style={styles.statusText}>{getStatusText(item.status)}</Text>
@@ -232,7 +230,7 @@ const DeliveryListScreen: React.FC = () => {
         <Text style={styles.headerTitle}>Pedidos</Text>
       </View>
 
-      {/* ✅ CORREÇÃO: Tabs com largura flex melhor */}
+      {/* Tabs */}
       <View style={styles.tabsContainer}>
         <TouchableOpacity
           style={[styles.tab, activeTab === 'disponiveis' && styles.tabActive]}
@@ -270,7 +268,7 @@ const DeliveryListScreen: React.FC = () => {
           onPress={() => setActiveTab('finalizadas')}
         >
           <Text style={[styles.tabText, activeTab === 'finalizadas' && styles.tabTextActive]}>
-            Finalizadas
+            Entregues
           </Text>
         </TouchableOpacity>
       </View>
@@ -339,7 +337,6 @@ const styles = StyleSheet.create({
     gap: 6,
     minWidth: 0,
   },
-  // ✅ NOVO: Tab mais larga para "Em Andamento"
   tabWide: {
     flex: 1.3,
   },

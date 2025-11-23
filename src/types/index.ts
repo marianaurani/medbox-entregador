@@ -36,10 +36,15 @@ export type DeliveryStackParamList = {
   Chat: { chatType: ChatType; chatName: string; deliveryId?: string }; // ✅ NOVO
 };
 
-export type MenuStackParamList = { // ✅ NOVO
+export type MenuStackParamList = {
   MenuHome: undefined;
-  Profile: undefined;
+  BankData: undefined;
+  BankAccount: undefined;
+  AddPixKey: { pixKeyId?: string } | undefined;
   Chat: { chatType: ChatType; chatName: string; deliveryId?: string };
+  Reports: undefined;
+  Notifications: undefined;
+  Help: undefined;
 };
 
 export type WalletStackParamList = {

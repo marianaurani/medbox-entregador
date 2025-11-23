@@ -1,5 +1,5 @@
-// src/screens/wallet/WithdrawScreen.tsx
-import React, { useState, useEffect } from 'react';
+// src/screens/wallet/WithdrawScreen.tsx (VERSÃO FINAL CORRIGIDA)
+import React, { useState } from 'react';
 import {
   View,
   Text,
@@ -21,7 +21,7 @@ import colors from '../../constants/colors';
 type WithdrawMethod = 'pix' | 'bank' | 'ted';
 
 const WithdrawScreen: React.FC = () => {
-  const navigation = useNavigation();
+  const navigation = useNavigation<any>();
   const { balance, withdraw } = useWallet();
   const { defaultPixKey, bankAccount } = useBank();
 
@@ -29,7 +29,15 @@ const WithdrawScreen: React.FC = () => {
   const [withdrawMethod, setWithdrawMethod] = useState<WithdrawMethod>('pix');
   const [isSubmitting, setIsSubmitting] = useState(false);
 
-  const formatCurrency = (value: string) => {
+  // ✅ Formata moeda para exibição (sem Math.abs - valores já são positivos aqui)
+  const formatCurrency = (value: string | number) => {
+    if (typeof value === 'number') {
+      return value.toLocaleString('pt-BR', {
+        minimumFractionDigits: 2,
+        maximumFractionDigits: 2,
+      });
+    }
+    
     const numbers = value.replace(/\D/g, '');
     const numberValue = Number(numbers) / 100;
     return numberValue.toLocaleString('pt-BR', {
@@ -78,19 +86,19 @@ const WithdrawScreen: React.FC = () => {
   const getPixIcon = (type: PixKeyType): any => {
     const icons: { [key in PixKeyType]: string } = {
       cpf: 'person',
-      phone: 'call',
+      telefone: 'call',
       email: 'mail',
-      random: 'key',
+      aleatoria: 'key',
     };
     return icons[type];
   };
 
   const getPixLabel = (type: PixKeyType) => {
-    const labels = {
+    const labels: { [key in PixKeyType]: string } = {
       cpf: 'CPF',
-      phone: 'Telefone',
+      telefone: 'Telefone',
       email: 'E-mail',
-      random: 'Chave Aleatória',
+      aleatoria: 'Chave Aleatória',
     };
     return labels[type];
   };
@@ -115,8 +123,10 @@ const WithdrawScreen: React.FC = () => {
     return true;
   };
 
-  const handleNavigateToSettings = () => {
-    navigation.navigate('WalletSettings' as never);
+  const handleNavigateToBankData = () => {
+    navigation.navigate('Menu', {
+      screen: 'BankData'
+    });
   };
 
   const validateForm = (): boolean => {
@@ -152,7 +162,7 @@ const WithdrawScreen: React.FC = () => {
         'Configure uma chave PIX antes de continuar.',
         [
           { text: 'Cancelar', style: 'cancel' },
-          { text: 'Configurar', onPress: handleNavigateToSettings }
+          { text: 'Configurar', onPress: handleNavigateToBankData }
         ]
       );
       return false;
@@ -164,7 +174,7 @@ const WithdrawScreen: React.FC = () => {
         'Configure uma conta bancária antes de continuar.',
         [
           { text: 'Cancelar', style: 'cancel' },
-          { text: 'Configurar', onPress: handleNavigateToSettings }
+          { text: 'Configurar', onPress: handleNavigateToBankData }
         ]
       );
       return false;
@@ -216,26 +226,27 @@ const WithdrawScreen: React.FC = () => {
         style={styles.keyboardView}
         behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
       >
+        {/* Header */}
         <View style={styles.header}>
-          <TouchableOpacity onPress={() => navigation.goBack()} hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}>
+          <TouchableOpacity onPress={() => navigation.goBack()}>
             <Ionicons name="arrow-back" size={24} color={colors.text} />
           </TouchableOpacity>
           <Text style={styles.headerTitle}>Sacar</Text>
-          <TouchableOpacity onPress={handleNavigateToSettings} hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}>
+          <TouchableOpacity onPress={handleNavigateToBankData}>
             <Ionicons name="settings-outline" size={24} color={colors.text} />
           </TouchableOpacity>
         </View>
 
         <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={styles.content}>
-          {/* 1. Saldo Disponível */}
+          {/* Saldo Disponível */}
           <View style={styles.balanceCard}>
             <Text style={styles.balanceLabel}>Saldo disponível</Text>
             <Text style={styles.balanceAmount}>
-              R$ {balance.available.toFixed(2).replace('.', ',')}
+              R$ {formatCurrency(balance.available)}
             </Text>
           </View>
 
-          {/* 2. Quanto deseja sacar */}
+          {/* Quanto deseja sacar */}
           <View style={styles.section}>
             <Text style={styles.sectionTitle}>Quanto deseja sacar?</Text>
             <View style={styles.amountInputContainer}>
@@ -265,7 +276,7 @@ const WithdrawScreen: React.FC = () => {
             </View>
           </View>
 
-          {/* 3. Método de Saque */}
+          {/* Método de Saque */}
           <View style={styles.section}>
             <Text style={styles.sectionTitle}>Método de Saque</Text>
             <View style={styles.methodsContainer}>
@@ -304,14 +315,14 @@ const WithdrawScreen: React.FC = () => {
             </View>
           </View>
 
-          {/* 4. Destino do Saque - Simplificado */}
+          {/* Destino do Saque */}
           <View style={styles.section}>
             <View style={styles.sectionHeader}>
               <Text style={styles.sectionTitle}>
                 {withdrawMethod === 'pix' ? 'Chave PIX' : 'Conta Bancária'}
               </Text>
-              <TouchableOpacity onPress={handleNavigateToSettings}>
-                <Text style={styles.changeLink}>Configurar</Text>
+              <TouchableOpacity onPress={handleNavigateToBankData}>
+                <Text style={styles.changeLink}>Gerenciar</Text>
               </TouchableOpacity>
             </View>
 
@@ -325,12 +336,15 @@ const WithdrawScreen: React.FC = () => {
                     <Text style={styles.destinationType}>{getPixLabel(defaultPixKey.type)}</Text>
                     <Text style={styles.destinationValue} numberOfLines={1}>{defaultPixKey.key}</Text>
                   </View>
-                  <Ionicons name="checkmark-circle" size={24} color={colors.success} />
+                  <View style={styles.defaultBadge}>
+                    <Ionicons name="star" size={12} color={colors.warning} />
+                    <Text style={styles.defaultBadgeText}>Padrão</Text>
+                  </View>
                 </View>
               ) : (
                 <TouchableOpacity 
                   style={styles.addDestinationButton}
-                  onPress={handleNavigateToSettings}
+                  onPress={handleNavigateToBankData}
                 >
                   <Ionicons name="add-circle-outline" size={24} color={colors.primary} />
                   <Text style={styles.addDestinationText}>Adicionar Chave PIX</Text>
@@ -353,7 +367,7 @@ const WithdrawScreen: React.FC = () => {
               ) : (
                 <TouchableOpacity 
                   style={styles.addDestinationButton}
-                  onPress={handleNavigateToSettings}
+                  onPress={handleNavigateToBankData}
                 >
                   <Ionicons name="add-circle-outline" size={24} color={colors.primary} />
                   <Text style={styles.addDestinationText}>Adicionar Conta Bancária</Text>
@@ -371,13 +385,13 @@ const WithdrawScreen: React.FC = () => {
               </View>
               <View style={styles.feeRow}>
                 <Text style={styles.feeLabel}>Taxa</Text>
-                <Text style={styles.feeValue}>R$ {getFee().toFixed(2).replace('.', ',')}</Text>
+                <Text style={styles.feeValue}>R$ {formatCurrency(getFee())}</Text>
               </View>
               <View style={styles.feeDivider} />
               <View style={styles.feeRow}>
                 <Text style={styles.feeTotalLabel}>Total a ser debitado</Text>
                 <Text style={styles.feeTotalValue}>
-                  R$ {(getAmountValue() + getFee()).toFixed(2).replace('.', ',')}
+                  R$ {formatCurrency(getAmountValue() + getFee())}
                 </Text>
               </View>
             </View>
@@ -388,7 +402,7 @@ const WithdrawScreen: React.FC = () => {
             <Ionicons name="information-circle-outline" size={20} color={colors.info} />
             <View style={styles.infoTextContainer}>
               <Text style={styles.infoText}>
-                • Valor mínimo: R$ {getMinimumAmount().toFixed(2).replace('.', ',')}
+                • Valor mínimo: R$ {formatCurrency(getMinimumAmount())}
               </Text>
               <Text style={styles.infoText}>
                 • Tempo: {withdrawMethods.find(m => m.method === withdrawMethod)?.time}
@@ -601,6 +615,20 @@ const styles = StyleSheet.create({
     fontSize: 15,
     fontWeight: '600',
     color: colors.text,
+  },
+  defaultBadge: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: colors.warning + '20',
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+    borderRadius: 12,
+    gap: 4,
+  },
+  defaultBadgeText: {
+    fontSize: 11,
+    fontWeight: '600',
+    color: colors.warning,
   },
   addDestinationButton: {
     flexDirection: 'row',

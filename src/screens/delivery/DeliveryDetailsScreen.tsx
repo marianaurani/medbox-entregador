@@ -4,29 +4,47 @@ import {
   View,
   Text,
   StyleSheet,
-  ScrollView,
   TouchableOpacity,
-  Linking,
+  ScrollView,
   Alert,
+  Linking,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
-import { useNavigation, useRoute, NavigationProp } from '@react-navigation/native';
-import { mockDeliveries } from '../../utils/mockData';
+import { useNavigation, useRoute, RouteProp } from '@react-navigation/native';
+import { useDelivery } from '../../contexts/DeliveryContext';
 import colors from '../../constants/colors';
-import { DeliveryStackParamList } from '../../types';
+
+type DeliveryStackParamList = {
+  DeliveryList: undefined;
+  DeliveryDetails: { deliveryId: string };
+  DeliveryInProgress: { deliveryId: string };
+};
+
+type RouteParams = RouteProp<DeliveryStackParamList, 'DeliveryDetails'>;
 
 const DeliveryDetailsScreen: React.FC = () => {
-  const navigation = useNavigation<NavigationProp<DeliveryStackParamList>>();
-  const route = useRoute();
-  const { deliveryId } = route.params as { deliveryId: string };
+  const navigation = useNavigation();
+  const route = useRoute<RouteParams>();
+  const { deliveryId } = route.params;
 
-  const delivery = mockDeliveries.find(d => d.id === deliveryId);
+  const { getDeliveryById } = useDelivery();
+  const delivery = getDeliveryById(deliveryId);
 
   if (!delivery) {
     return (
       <SafeAreaView style={styles.container}>
-        <Text>Pedido não encontrado</Text>
+        <View style={styles.header}>
+          <TouchableOpacity onPress={() => navigation.goBack()}>
+            <Ionicons name="arrow-back" size={24} color={colors.text} />
+          </TouchableOpacity>
+          <Text style={styles.headerTitle}>Detalhes</Text>
+          <View style={{ width: 24 }} />
+        </View>
+        <View style={styles.errorContainer}>
+          <Ionicons name="alert-circle-outline" size={64} color={colors.error} />
+          <Text style={styles.errorText}>Pedido não encontrado</Text>
+        </View>
       </SafeAreaView>
     );
   }
@@ -35,11 +53,75 @@ const DeliveryDetailsScreen: React.FC = () => {
     return `R$ ${value.toFixed(2).replace('.', ',')}`;
   };
 
-  const formatDistance = (distance: number) => {
-    return `${distance.toFixed(1)} km`;
+  const formatDate = (date: Date | string) => {
+    const dateObj = typeof date === 'string' ? new Date(date) : date;
+    return dateObj.toLocaleDateString('pt-BR', {
+      day: '2-digit',
+      month: 'long',
+      year: 'numeric',
+      hour: '2-digit',
+      minute: '2-digit',
+    });
   };
 
-  const handleCall = (phone: string, name: string) => {
+  const getStatusColor = () => {
+    switch (delivery.status) {
+      case 'disponivel':
+        return colors.available;
+      case 'aceito':
+        return colors.accepted;
+      case 'coletado':
+        return colors.inProgress;
+      case 'em_rota':
+        return colors.inProgress;
+      case 'entregue':
+        return colors.delivered;
+      case 'cancelado':
+        return colors.error;
+      default:
+        return colors.textSecondary;
+    }
+  };
+
+  const getStatusLabel = () => {
+    switch (delivery.status) {
+      case 'disponivel':
+        return 'Disponível';
+      case 'aceito':
+        return 'Aceito';
+      case 'coletado':
+        return 'Coletado';
+      case 'em_rota':
+        return 'Em Rota';
+      case 'entregue':
+        return 'Entregue';
+      case 'cancelado':
+        return 'Cancelado';
+      default:
+        return delivery.status;
+    }
+  };
+
+  const getStatusIcon = () => {
+    switch (delivery.status) {
+      case 'disponivel':
+        return 'hourglass-outline';
+      case 'aceito':
+        return 'checkmark-circle';
+      case 'coletado':
+        return 'cube';
+      case 'em_rota':
+        return 'bicycle';
+      case 'entregue':
+        return 'checkmark-done-circle';
+      case 'cancelado':
+        return 'close-circle';
+      default:
+        return 'help-circle';
+    }
+  };
+
+  const handleCallPhone = (phone: string, name: string) => {
     Alert.alert(
       'Ligar',
       `Deseja ligar para ${name}?`,
@@ -47,200 +129,196 @@ const DeliveryDetailsScreen: React.FC = () => {
         { text: 'Cancelar', style: 'cancel' },
         {
           text: 'Ligar',
-          onPress: () => Linking.openURL(`tel:${phone}`),
-        },
-      ]
-    );
-  };
-
-  // ✅ NOVO - Função para abrir chat com o cliente
-  const handleChatCustomer = () => {
-    navigation.navigate('Chat', {
-      chatType: 'customer',
-      chatName: delivery.customer.name,
-      deliveryId: delivery.id,
-    });
-  };
-
-  // ✅ NOVO - Função para abrir chat com a farmácia
-  const handleChatPharmacy = () => {
-    navigation.navigate('Chat', {
-      chatType: 'pharmacy',
-      chatName: delivery.pharmacy.name,
-      deliveryId: delivery.id,
-    });
-  };
-
-  const handleAcceptDelivery = () => {
-    Alert.alert(
-      'Aceitar Pedido',
-      'Deseja aceitar este pedido?',
-      [
-        { text: 'Cancelar', style: 'cancel' },
-        {
-          text: 'Aceitar',
           onPress: () => {
-            navigation.navigate('DeliveryInProgress', { deliveryId });
+            Linking.openURL(`tel:${phone}`);
           },
         },
       ]
     );
   };
 
-  const handleNavigateToPharmacy = () => {
-    const url = `https://www.google.com/maps/dir/?api=1&destination=${delivery.pharmacy.latitude},${delivery.pharmacy.longitude}`;
+  const handleOpenMaps = (address: string) => {
+    const url = `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(address)}`;
     Linking.openURL(url);
   };
 
   return (
-    <SafeAreaView style={styles.container} edges={['top']}>
-      {/* Header */}
+    <SafeAreaView style={styles.container}>
       <View style={styles.header}>
-        <TouchableOpacity onPress={() => navigation.goBack()}>
+        <TouchableOpacity 
+          onPress={() => navigation.goBack()}
+          hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
+        >
           <Ionicons name="arrow-back" size={24} color={colors.text} />
         </TouchableOpacity>
-        <Text style={styles.headerTitle}>Detalhes do Pedido</Text>
+        <Text style={styles.headerTitle}>Detalhes da Entrega</Text>
         <View style={{ width: 24 }} />
       </View>
 
       <ScrollView showsVerticalScrollIndicator={false}>
-        {/* Card de Informações Principais */}
+        {/* Card Principal com Status */}
         <View style={styles.mainCard}>
-          <View style={styles.orderHeader}>
-            <Text style={styles.orderId}>{delivery.orderId}</Text>
-            <Text style={styles.deliveryFee}>{formatCurrency(delivery.deliveryFee)}</Text>
+          <View style={[
+            styles.iconContainer,
+            { backgroundColor: getStatusColor() }
+          ]}>
+            <Ionicons
+              name={getStatusIcon()}
+              size={32}
+              color="white"
+            />
           </View>
+
+          <Text style={styles.orderId}>{delivery.orderId}</Text>
+
+          <View style={[styles.statusBadge, { backgroundColor: getStatusColor() }]}>
+            <Text style={styles.statusText}>{getStatusLabel()}</Text>
+          </View>
+
+          <Text style={styles.deliveryFee}>{formatCurrency(delivery.deliveryFee)}</Text>
+        </View>
+
+        {/* Informações da Entrega */}
+        <View style={styles.section}>
+          <Text style={styles.sectionTitle}>Informações da Entrega</Text>
+          
+          <View style={styles.infoRow}>
+            <Text style={styles.infoLabel}>ID do Pedido</Text>
+            <Text style={styles.infoValueMono}>{delivery.id}</Text>
+          </View>
+
+          <View style={styles.divider} />
 
           <View style={styles.infoRow}>
-            <View style={styles.infoItem}>
-              <Ionicons name="navigate-outline" size={20} color={colors.textSecondary} />
-              <Text style={styles.infoText}>{formatDistance(delivery.distance)}</Text>
-            </View>
-            <View style={styles.infoItem}>
-              <Ionicons name="time-outline" size={20} color={colors.textSecondary} />
-              <Text style={styles.infoText}>{delivery.estimatedTime} min</Text>
-            </View>
-            <View style={styles.infoItem}>
-              <Ionicons name="cube-outline" size={20} color={colors.textSecondary} />
-              <Text style={styles.infoText}>{delivery.items.length} itens</Text>
-            </View>
+            <Text style={styles.infoLabel}>
+              {delivery.status === 'entregue' ? 'Entregue em' : 'Criado em'}
+            </Text>
+            <Text style={styles.infoValue}>
+              {delivery.status === 'entregue' && delivery.deliveredAt 
+                ? formatDate(delivery.deliveredAt)
+                : delivery.createdAt 
+                ? formatDate(delivery.createdAt) 
+                : 'N/A'}
+            </Text>
+          </View>
+
+          <View style={styles.divider} />
+
+          <View style={styles.infoRow}>
+            <Ionicons name="navigate" size={16} color={colors.textSecondary} />
+            <Text style={styles.infoLabel}>Distância</Text>
+            <Text style={styles.infoValue}>{delivery.distance.toFixed(1)} km</Text>
+          </View>
+
+          <View style={styles.divider} />
+
+          <View style={styles.infoRow}>
+            <Ionicons name="time" size={16} color={colors.textSecondary} />
+            <Text style={styles.infoLabel}>Tempo Estimado</Text>
+            <Text style={styles.infoValue}>{delivery.estimatedTime} min</Text>
+          </View>
+
+          <View style={styles.divider} />
+
+          <View style={styles.infoRow}>
+            <Ionicons name="cube" size={16} color={colors.textSecondary} />
+            <Text style={styles.infoLabel}>Itens</Text>
+            <Text style={styles.infoValue}>{delivery.items.length}</Text>
           </View>
         </View>
 
-        {/* Origem - Farmácia */}
+        {/* Card da Farmácia (Origem) */}
         <View style={styles.section}>
-          <Text style={styles.sectionTitle}>Origem - Farmácia</Text>
+          <Text style={styles.sectionTitle}>Farmácia (Origem)</Text>
+
           <View style={styles.locationCard}>
             <View style={styles.locationHeader}>
-              <View style={styles.locationIcon}>
-                <Ionicons name="storefront" size={24} color={colors.primary} />
-              </View>
-              <View style={styles.locationInfo}>
-                <Text style={styles.locationName}>{delivery.pharmacy.name}</Text>
-                <Text style={styles.locationAddress}>{delivery.pharmacy.address}</Text>
-              </View>
+              <Ionicons name="storefront" size={24} color={colors.primary} />
+              <Text style={styles.locationName}>{delivery.pharmacy.name}</Text>
             </View>
+
+            <Text style={styles.locationAddress}>{delivery.pharmacy.address}</Text>
+
             <View style={styles.actionButtons}>
               <TouchableOpacity
-                style={styles.callButton}
-                onPress={() => handleCall(delivery.pharmacy.phone, delivery.pharmacy.name)}
+                style={styles.actionButton}
+                onPress={() => handleCallPhone(delivery.pharmacy.phone, delivery.pharmacy.name)}
               >
-                <Ionicons name="call" size={18} color="white" />
-                <Text style={styles.callButtonText}>Ligar</Text>
+                <Ionicons name="call" size={18} color={colors.primary} />
+                <Text style={styles.actionButtonText}>Ligar</Text>
               </TouchableOpacity>
-              {/* ✅ NOVO - Botão de Chat com Farmácia */}
+
               <TouchableOpacity
-                style={styles.chatButton}
-                onPress={handleChatPharmacy}
+                style={styles.actionButton}
+                onPress={() => handleOpenMaps(delivery.pharmacy.address)}
               >
-                <Ionicons name="chatbubble" size={18} color="white" />
-                <Text style={styles.chatButtonText}>Chat</Text>
-              </TouchableOpacity>
-              <TouchableOpacity
-                style={styles.navigateButton}
-                onPress={handleNavigateToPharmacy}
-              >
-                <Ionicons name="navigate" size={18} color="white" />
-                <Text style={styles.navigateButtonText}>Navegar</Text>
+                <Ionicons name="navigate" size={18} color={colors.primary} />
+                <Text style={styles.actionButtonText}>Abrir Mapa</Text>
               </TouchableOpacity>
             </View>
           </View>
         </View>
 
-        {/* Destino - Cliente */}
+        {/* Card do Cliente (Destino) */}
         <View style={styles.section}>
-          <Text style={styles.sectionTitle}>Destino - Cliente</Text>
+          <Text style={styles.sectionTitle}>Cliente (Destino)</Text>
+
           <View style={styles.locationCard}>
             <View style={styles.locationHeader}>
-              <View style={[styles.locationIcon, { backgroundColor: colors.medboxLightGreen }]}>
-                <Ionicons name="person" size={24} color={colors.primary} />
-              </View>
-              <View style={styles.locationInfo}>
-                <Text style={styles.locationName}>{delivery.customer.name}</Text>
-                <Text style={styles.locationAddress}>{delivery.customer.address}</Text>
-                {delivery.customer.complement && (
-                  <Text style={styles.locationComplement}>{delivery.customer.complement}</Text>
-                )}
-              </View>
+              <Ionicons name="person" size={24} color={colors.primary} />
+              <Text style={styles.locationName}>{delivery.customer.name}</Text>
             </View>
+
+            <Text style={styles.locationAddress}>{delivery.customer.address}</Text>
+            
+            {delivery.customer.complement && (
+              <Text style={styles.locationComplement}>{delivery.customer.complement}</Text>
+            )}
+
             <View style={styles.actionButtons}>
               <TouchableOpacity
-                style={styles.callButton}
-                onPress={() => handleCall(delivery.customer.phone, delivery.customer.name)}
+                style={styles.actionButton}
+                onPress={() => handleCallPhone(delivery.customer.phone, delivery.customer.name)}
               >
-                <Ionicons name="call" size={18} color="white" />
-                <Text style={styles.callButtonText}>Ligar</Text>
+                <Ionicons name="call" size={18} color={colors.primary} />
+                <Text style={styles.actionButtonText}>Ligar</Text>
               </TouchableOpacity>
-              {/* ✅ NOVO - Botão de Chat com Cliente */}
+
               <TouchableOpacity
-                style={styles.chatButton}
-                onPress={handleChatCustomer}
+                style={styles.actionButton}
+                onPress={() => handleOpenMaps(delivery.customer.address)}
               >
-                <Ionicons name="chatbubble" size={18} color="white" />
-                <Text style={styles.chatButtonText}>Chat</Text>
+                <Ionicons name="navigate" size={18} color={colors.primary} />
+                <Text style={styles.actionButtonText}>Abrir Mapa</Text>
               </TouchableOpacity>
             </View>
           </View>
         </View>
 
-        {/* Itens do Pedido */}
+        {/* Itens da Entrega */}
         <View style={styles.section}>
-          <Text style={styles.sectionTitle}>Itens do Pedido</Text>
-          <View style={styles.itemsCard}>
-            {delivery.items.map((item, index) => (
-              <View key={item.id}>
-                <View style={styles.itemRow}>
-                  <View style={styles.itemInfo}>
-                    <Text style={styles.itemQuantity}>{item.quantity}x</Text>
-                    <View style={styles.itemDetails}>
-                      <Text style={styles.itemName}>{item.name}</Text>
-                      {item.requiresPrescription && (
-                        <View style={styles.prescriptionBadge}>
-                          <Ionicons name="document-text" size={12} color={colors.warning} />
-                          <Text style={styles.prescriptionText}>Receita</Text>
-                        </View>
-                      )}
+          <Text style={styles.sectionTitle}>Itens da Entrega ({delivery.items.length})</Text>
+
+          {delivery.items.map((item) => (
+            <View key={item.id} style={styles.itemCard}>
+              <View style={styles.itemHeader}>
+                <Text style={styles.itemQuantity}>{item.quantity}x</Text>
+                <View style={styles.itemInfo}>
+                  <Text style={styles.itemName}>{item.name}</Text>
+                  {item.requiresPrescription && (
+                    <View style={styles.prescriptionBadge}>
+                      <Ionicons name="document-text" size={12} color={colors.warning} />
+                      <Text style={styles.prescriptionText}>Requer Receita</Text>
                     </View>
-                  </View>
+                  )}
                 </View>
-                {index < delivery.items.length - 1 && <View style={styles.itemDivider} />}
               </View>
-            ))}
-          </View>
+            </View>
+          ))}
         </View>
 
-        <View style={{ height: 100 }} />
+        <View style={{ height: 40 }} />
       </ScrollView>
-
-      {/* Botão Fixo de Aceitar */}
-      {delivery.status === 'disponivel' && (
-        <View style={styles.bottomContainer}>
-          <TouchableOpacity style={styles.acceptButton} onPress={handleAcceptDelivery}>
-            <Text style={styles.acceptButtonText}>Aceitar Pedido</Text>
-            <Ionicons name="checkmark-circle" size={24} color="white" />
-          </TouchableOpacity>
-        </View>
-      )}
     </SafeAreaView>
   );
 };
@@ -255,6 +333,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'space-between',
     paddingHorizontal: 20,
+    paddingTop: 15,
     paddingBottom: 15,
     backgroundColor: colors.backgroundLight,
     borderBottomWidth: 1,
@@ -268,228 +347,223 @@ const styles = StyleSheet.create({
   mainCard: {
     backgroundColor: colors.backgroundLight,
     margin: 20,
-    padding: 20,
-    borderRadius: 12,
+    padding: 30,
+    borderRadius: 16,
+    alignItems: 'center',
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.1,
-    shadowRadius: 4,
-    elevation: 3,
+    shadowRadius: 8,
+    elevation: 4,
   },
-  orderHeader: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
+  iconContainer: {
+    width: 64,
+    height: 64,
+    borderRadius: 32,
+    justifyContent: 'center',
     alignItems: 'center',
-    marginBottom: 15,
+    marginBottom: 16,
   },
   orderId: {
     fontSize: 20,
     fontWeight: 'bold',
     color: colors.text,
+    marginBottom: 8,
+  },
+  statusBadge: {
+    paddingHorizontal: 16,
+    paddingVertical: 6,
+    borderRadius: 12,
+    marginBottom: 16,
+  },
+  statusText: {
+    fontSize: 12,
+    color: 'white',
+    fontWeight: '600',
   },
   deliveryFee: {
-    fontSize: 24,
+    fontSize: 32,
     fontWeight: 'bold',
     color: colors.success,
   },
-  infoRow: {
-    flexDirection: 'row',
-    justifyContent: 'space-around',
-  },
-  infoItem: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 6,
-  },
-  infoText: {
-    fontSize: 14,
-    color: colors.textSecondary,
-    fontWeight: '500',
-  },
   section: {
+    backgroundColor: colors.backgroundLight,
     marginHorizontal: 20,
-    marginBottom: 20,
+    marginBottom: 16,
+    padding: 20,
+    borderRadius: 12,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.08,
+    shadowRadius: 4,
+    elevation: 3,
   },
   sectionTitle: {
     fontSize: 16,
     fontWeight: 'bold',
     color: colors.text,
-    marginBottom: 12,
+    marginBottom: 16,
+  },
+  infoRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    paddingVertical: 12,
+    gap: 8,
+  },
+  infoLabel: {
+    fontSize: 14,
+    color: colors.textSecondary,
+    flex: 1,
+  },
+  infoValue: {
+    fontSize: 14,
+    color: colors.text,
+    fontWeight: '500',
+    textAlign: 'right',
+    flexShrink: 0,
+  },
+  infoValueMono: {
+    fontSize: 12,
+    color: colors.text,
+    fontWeight: '500',
+    fontFamily: 'monospace',
+    textAlign: 'right',
+    flexShrink: 0,
+  },
+  divider: {
+    height: 1,
+    backgroundColor: colors.divider,
   },
   locationCard: {
-    backgroundColor: colors.backgroundLight,
+    backgroundColor: colors.background,
     padding: 16,
     borderRadius: 12,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.08,
-    shadowRadius: 4,
-    elevation: 2,
   },
   locationHeader: {
     flexDirection: 'row',
-    marginBottom: 12,
-  },
-  locationIcon: {
-    width: 50,
-    height: 50,
-    borderRadius: 25,
-    backgroundColor: colors.medboxLightGreen,
-    justifyContent: 'center',
     alignItems: 'center',
-    marginRight: 12,
-  },
-  locationInfo: {
-    flex: 1,
+    gap: 12,
+    marginBottom: 12,
   },
   locationName: {
     fontSize: 16,
-    fontWeight: '600',
+    fontWeight: 'bold',
     color: colors.text,
-    marginBottom: 4,
+    flex: 1,
   },
   locationAddress: {
     fontSize: 14,
     color: colors.textSecondary,
     lineHeight: 20,
+    marginBottom: 8,
   },
   locationComplement: {
     fontSize: 13,
     color: colors.textLight,
-    marginTop: 2,
+    marginBottom: 8,
   },
   actionButtons: {
     flexDirection: 'row',
-    gap: 10,
+    gap: 12,
+    marginTop: 8,
   },
-  callButton: {
+  actionButton: {
     flex: 1,
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
-    backgroundColor: colors.primary,
-    paddingVertical: 10,
-    borderRadius: 8,
     gap: 6,
+    backgroundColor: colors.medboxLightGreen,
+    paddingVertical: 10,
+    paddingHorizontal: 16,
+    borderRadius: 8,
   },
-  callButtonText: {
-    color: 'white',
+  actionButtonText: {
     fontSize: 14,
+    color: colors.primary,
     fontWeight: '600',
   },
-  // ✅ NOVO - Estilos do botão de Chat
-  chatButton: {
-    flex: 1,
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    backgroundColor: colors.info,
-    paddingVertical: 10,
+  itemCard: {
+    backgroundColor: colors.background,
+    padding: 12,
     borderRadius: 8,
-    gap: 6,
+    marginBottom: 8,
   },
-  chatButtonText: {
-    color: 'white',
-    fontSize: 14,
-    fontWeight: '600',
-  },
-  navigateButton: {
-    flex: 1,
+  itemHeader: {
     flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    backgroundColor: colors.info,
-    paddingVertical: 10,
-    borderRadius: 8,
-    gap: 6,
-  },
-  navigateButtonText: {
-    color: 'white',
-    fontSize: 14,
-    fontWeight: '600',
-  },
-  itemsCard: {
-    backgroundColor: colors.backgroundLight,
-    padding: 16,
-    borderRadius: 12,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.08,
-    shadowRadius: 4,
-    elevation: 2,
-  },
-  itemRow: {
-    flexDirection: 'row',
-    paddingVertical: 12,
-  },
-  itemInfo: {
-    flexDirection: 'row',
-    flex: 1,
+    alignItems: 'flex-start',
     gap: 12,
   },
   itemQuantity: {
     fontSize: 16,
     fontWeight: 'bold',
     color: colors.primary,
-    minWidth: 30,
+    width: 35,
   },
-  itemDetails: {
+  itemInfo: {
     flex: 1,
   },
   itemName: {
-    fontSize: 15,
-    fontWeight: '500',
+    fontSize: 14,
     color: colors.text,
+    fontWeight: '500',
     marginBottom: 4,
   },
   prescriptionBadge: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: `${colors.warning}15`,
-    alignSelf: 'flex-start',
+    gap: 4,
+    backgroundColor: colors.backgroundLight,
     paddingHorizontal: 8,
     paddingVertical: 4,
     borderRadius: 12,
-    gap: 4,
+    alignSelf: 'flex-start',
   },
   prescriptionText: {
-    fontSize: 11,
+    fontSize: 10,
     color: colors.warning,
     fontWeight: '600',
   },
-  itemDivider: {
-    height: 1,
-    backgroundColor: colors.divider,
-  },
-  bottomContainer: {
-    position: 'absolute',
-    bottom: 0,
-    left: 0,
-    right: 0,
-    backgroundColor: colors.backgroundLight,
-    padding: 20,
-    paddingBottom: 30,
-    borderTopWidth: 1,
-    borderTopColor: colors.border,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: -2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 4,
-    elevation: 5,
-  },
-  acceptButton: {
+  statsContainer: {
     flexDirection: 'row',
-    backgroundColor: colors.primary,
-    paddingVertical: 16,
+    paddingHorizontal: 20,
+    gap: 12,
+    marginBottom: 16,
+  },
+  statCard: {
+    flex: 1,
+    backgroundColor: colors.backgroundLight,
+    padding: 16,
     borderRadius: 12,
     alignItems: 'center',
-    justifyContent: 'center',
-    gap: 10,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.08,
+    shadowRadius: 4,
+    elevation: 3,
   },
-  acceptButtonText: {
-    color: 'white',
+  statValue: {
     fontSize: 18,
     fontWeight: 'bold',
+    color: colors.text,
+    marginTop: 8,
+  },
+  statLabel: {
+    fontSize: 11,
+    color: colors.textSecondary,
+    marginTop: 4,
+  },
+  errorContainer: {
+    flex: 1,
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingHorizontal: 40,
+  },
+  errorText: {
+    fontSize: 16,
+    color: colors.textSecondary,
+    marginTop: 16,
   },
 });
 

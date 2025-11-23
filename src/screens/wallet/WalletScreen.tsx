@@ -1,4 +1,4 @@
-// src/screens/wallet/WalletScreen.tsx
+// src/screens/wallet/WalletScreen.tsx (CORRIGIDO - Formatação consistente)
 import React from 'react';
 import {
   Text,
@@ -22,15 +22,20 @@ const WalletScreen: React.FC = () => {
     navigation.navigate('WalletSettings');
   };
   
-  const { balance, earnings, transactions, isBalanceVisible, toggleBalanceVisibility } = useWallet();
+  const { balance, earnings, transactions, isBalanceVisible, toggleBalanceVisibility, resetWallet } = useWallet();
   
   const recentTransactions = transactions.slice(0, 5);
 
+  // ✅ CORREÇÃO: Função de formatação sem Math.abs()
   const formatCurrency = (value: number) => {
     if (!isBalanceVisible) {
       return 'R$ ••••••';
     }
-    return `R$ ${Math.abs(value).toFixed(2).replace('.', ',')}`;
+    // Garante que valores positivos sejam exibidos corretamente
+    return `R$ ${value.toLocaleString('pt-BR', {
+      minimumFractionDigits: 2,
+      maximumFractionDigits: 2,
+    })}`;
   };
 
   const formatDate = (date: Date | string) => {
@@ -87,7 +92,6 @@ const WalletScreen: React.FC = () => {
     navigation.navigate('Transactions');
   };
 
-  // ✅ NOVO: Navega para detalhes da transação
   const handleTransactionPress = (transactionId: string) => {
     navigation.navigate('TransactionDetails', { transactionId });
   };
@@ -121,7 +125,7 @@ const WalletScreen: React.FC = () => {
           styles.transactionAmount,
           { color: item.amount > 0 ? colors.success : colors.error }
         ]}>
-          {item.amount > 0 ? '+' : ''}{formatCurrency(item.amount)}
+          {item.amount > 0 ? '+' : ''}{formatCurrency(Math.abs(item.amount))}
         </Text>
         <View style={[styles.statusBadge, { backgroundColor: getStatusColor(item.status) }]}>
           <Text style={styles.statusText}>
@@ -137,9 +141,19 @@ const WalletScreen: React.FC = () => {
       {/* Header */}
       <View style={styles.header}>
         <Text style={styles.headerTitle}>Carteira</Text>
-        <TouchableOpacity onPress={handleSettings}>
-          <Ionicons name="settings-outline" size={24} color={colors.text} />
-        </TouchableOpacity>
+        <View style={{ flexDirection: 'row', gap: 12 }}>
+          <TouchableOpacity onPress={async () => {
+            if (resetWallet) {
+              await resetWallet();
+              alert('Carteira resetada! Saldo recalculado.');
+            }
+          }}>
+            <Ionicons name="refresh-outline" size={24} color={colors.primary} />
+          </TouchableOpacity>
+          <TouchableOpacity onPress={handleSettings}>
+            <Ionicons name="settings-outline" size={24} color={colors.text} />
+          </TouchableOpacity>
+        </View>
       </View>
 
       <ScrollView showsVerticalScrollIndicator={false}>

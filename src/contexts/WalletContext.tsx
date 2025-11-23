@@ -1,4 +1,4 @@
-// src/contexts/WalletContext.tsx
+// src/contexts/WalletContext.tsx (CORRIGIDO - Atualização automática)
 import React, { createContext, useState, useContext, useCallback, useEffect } from 'react';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { Transaction, WalletBalance, Earnings } from '../types';
@@ -15,6 +15,7 @@ interface WalletContextData {
   withdraw: (amount: number, pixKey: string) => Promise<boolean>;
   getFilteredTransactions: (type?: string) => Transaction[];
   getTransactionById: (id: string) => Transaction | undefined;
+  resetWallet: () => Promise<void>; // ✅ NOVO
   loading: boolean;
 }
 
@@ -61,6 +62,11 @@ export const WalletProvider: React.FC<{ children: React.ReactNode }> = ({ childr
           ...t,
           date: new Date(t.date),
         }));
+        
+        // ✅ CORREÇÃO: Filtra apenas transações de entregas (remove saques antigos problemáticos)
+        const deliveryTransactions = withDates.filter((t: Transaction) => t.type === 'entrega');
+        console.log(`📋 [WalletContext] Transações carregadas: ${withDates.length} (${deliveryTransactions.length} de entregas)`);
+        
         setTransactions(withDates);
       }
 
@@ -117,69 +123,135 @@ export const WalletProvider: React.FC<{ children: React.ReactNode }> = ({ childr
     }
   };
 
-  // ✅ MONITORA ENTREGAS CONCLUÍDAS E CRIA TRANSAÇÕES AUTOMATICAMENTE
+  // ✅ CORREÇÃO PRINCIPAL: Recalcula tudo quando deliveries mudam
   useEffect(() => {
-    if (loading) return;
-
-    const completedDeliveries = deliveries.filter(d => d.status === 'entregue');
-
-    completedDeliveries.forEach(async (delivery) => {
-      if (processedDeliveries.has(delivery.id)) {
+    const updateWalletFromDeliveries = async () => {
+      if (loading) {
+        console.log('⏳ WalletContext ainda está carregando...');
         return;
       }
 
-      // Cria transação automaticamente
-      const newTransaction: Transaction = {
-        id: `tx_${delivery.id}_${Date.now()}`,
-        type: 'entrega',
-        amount: delivery.deliveryFee,
-        description: `Entrega #${delivery.orderId} - ${delivery.customer.name}`,
-        date: delivery.deliveredAt || new Date(),
-        status: 'concluido',
-        deliveryId: delivery.id,
-      };
+      console.log('🔄 [WalletContext] Verificando entregas...');
+      console.log('📦 [WalletContext] Total de entregas:', deliveries.length);
+      
+      const completedDeliveries = deliveries.filter(d => d.status === 'entregue');
+      console.log('✅ [WalletContext] Entregas concluídas:', completedDeliveries.length);
+      
+      if (completedDeliveries.length === 0) {
+        console.log('⚠️ [WalletContext] Nenhuma entrega concluída ainda');
+        return;
+      }
 
-      const updatedTransactions = [newTransaction, ...transactions];
-      await saveTransactions(updatedTransactions);
+      // Lista as entregas concluídas
+      completedDeliveries.forEach(d => {
+        console.log(`   📦 Entrega ${d.orderId}: R$ ${d.deliveryFee.toFixed(2)} - Status: ${d.status}`);
+      });
 
+      // Verifica se há novas entregas concluídas
+      let hasNewDeliveries = false;
+      const newTransactionsList: Transaction[] = [...transactions];
       const newProcessed = new Set(processedDeliveries);
-      newProcessed.add(delivery.id);
-      await saveProcessedDeliveries(newProcessed);
 
-      console.log('✅ Transação criada automaticamente:', newTransaction.id);
-    });
+      console.log('🔍 [WalletContext] Entregas já processadas:', Array.from(processedDeliveries));
 
-    // Atualiza ganhos
-    const today = new Date();
-    const todayDeliveries = completedDeliveries.filter(d => {
-      if (!d.deliveredAt) return false;
-      const deliveryDate = new Date(d.deliveredAt);
-      return deliveryDate.toDateString() === today.toDateString();
-    });
+      for (const delivery of completedDeliveries) {
+        if (!processedDeliveries.has(delivery.id)) {
+          hasNewDeliveries = true;
+          
+          // Cria transação para a entrega
+          const newTransaction: Transaction = {
+            id: `tx_${delivery.id}_${Date.now()}`,
+            type: 'entrega',
+            amount: delivery.deliveryFee,
+            description: `Entrega #${delivery.orderId} - ${delivery.customer.name}`,
+            date: delivery.deliveredAt || new Date(),
+            status: 'concluido',
+            deliveryId: delivery.id,
+          };
 
-    const todayEarnings = todayDeliveries.reduce((sum, d) => sum + d.deliveryFee, 0);
+          newTransactionsList.unshift(newTransaction);
+          newProcessed.add(delivery.id);
 
-    const newEarnings: Earnings = {
-      ...earnings,
-      today: todayEarnings,
-      deliveriesToday: todayDeliveries.length,
-      routesCompleted: completedDeliveries.length,
+          console.log('✅ [WalletContext] Nova transação criada:', {
+            id: newTransaction.id,
+            valor: delivery.deliveryFee,
+            pedido: delivery.orderId
+          });
+        }
+      }
+
+      // Se houver novas entregas, salva as transações
+      if (hasNewDeliveries) {
+        console.log('💾 [WalletContext] Salvando novas transações...');
+        await saveTransactions(newTransactionsList);
+        await saveProcessedDeliveries(newProcessed);
+        console.log('✅ [WalletContext] Transações salvas!');
+      } else {
+        console.log('ℹ️ [WalletContext] Nenhuma nova entrega para processar');
+      }
+
+      // ✅ SEMPRE recalcula o saldo baseado nas entregas concluídas
+      const totalEarnings = completedDeliveries.reduce((sum, d) => sum + d.deliveryFee, 0);
+      
+      // Calcula o total sacado
+      const withdrawnAmount = newTransactionsList
+        .filter(t => t.type === 'saque' && t.status === 'concluido')
+        .reduce((sum, t) => sum + Math.abs(t.amount), 0);
+
+      // Calcula saldo disponível
+      const availableBalance = Math.max(0, totalEarnings - withdrawnAmount);
+
+      console.log('💰 [WalletContext] Cálculo do saldo:', {
+        totalGanho: totalEarnings.toFixed(2),
+        totalSacado: withdrawnAmount.toFixed(2),
+        saldoDisponivel: availableBalance.toFixed(2),
+        entregasConcluidas: completedDeliveries.length
+      });
+
+      // Atualiza saldo
+      const newBalance: WalletBalance = {
+        available: availableBalance,
+        pending: 0,
+        total: availableBalance,
+      };
+      await saveBalance(newBalance);
+      console.log('✅ [WalletContext] Saldo atualizado!');
+
+      // Atualiza ganhos do dia
+      const today = new Date();
+      const todayDeliveries = completedDeliveries.filter(d => {
+        if (!d.deliveredAt) return false;
+        const deliveryDate = new Date(d.deliveredAt);
+        return deliveryDate.toDateString() === today.toDateString();
+      });
+
+      const todayEarnings = todayDeliveries.reduce((sum, d) => sum + d.deliveryFee, 0);
+
+      // Conta entregas aceitas (não apenas concluídas)
+      const acceptedDeliveries = deliveries.filter(d => 
+        d.status === 'aceito' || d.status === 'coletado' || d.status === 'em_rota' || d.status === 'entregue'
+      );
+
+      // ✅ CORREÇÃO: Mantém a estrutura correta do tipo Earnings
+      const newEarnings: Earnings = {
+        today: todayEarnings,
+        week: totalEarnings,
+        month: totalEarnings,
+        deliveriesToday: todayDeliveries.length,
+        routesAccepted: acceptedDeliveries.length,
+        routesCompleted: completedDeliveries.length,
+      };
+      await saveEarnings(newEarnings);
+
+      console.log('📊 [WalletContext] Ganhos atualizados:', {
+        hoje: todayEarnings.toFixed(2),
+        entregasHoje: todayDeliveries.length
+      });
+      console.log('✅ [WalletContext] Atualização completa!');
     };
-    saveEarnings(newEarnings);
 
-    // Atualiza saldo disponível
-    const totalEarnings = completedDeliveries.reduce((sum, d) => sum + d.deliveryFee, 0);
-    const withdrawnAmount = transactions
-      .filter(t => t.type === 'saque' && t.status === 'concluido')
-      .reduce((sum, t) => sum + Math.abs(t.amount), 0);
-
-    const newBalance: WalletBalance = {
-      available: totalEarnings - withdrawnAmount,
-      pending: 0,
-      total: totalEarnings - withdrawnAmount,
-    };
-    saveBalance(newBalance);
-  }, [deliveries, loading]);
+    updateWalletFromDeliveries();
+  }, [deliveries, loading]); // ✅ Dispara quando deliveries mudar
 
   const toggleBalanceVisibility = useCallback(() => {
     setIsBalanceVisible(prev => !prev);
@@ -195,11 +267,22 @@ export const WalletProvider: React.FC<{ children: React.ReactNode }> = ({ childr
     const updatedTransactions = [newTransaction, ...transactions];
     await saveTransactions(updatedTransactions);
 
+    // ✅ Atualiza saldo corretamente baseado no tipo de transação
     if (transaction.status === 'concluido') {
+      let newAvailable = balance.available;
+      
+      // Se for saque (amount negativo), subtrai o valor absoluto
+      if (transaction.type === 'saque') {
+        newAvailable = Math.max(0, balance.available - Math.abs(transaction.amount));
+      } else {
+        // Se for ganho (amount positivo), adiciona
+        newAvailable = balance.available + transaction.amount;
+      }
+
       const newBalance: WalletBalance = {
         ...balance,
-        available: balance.available + transaction.amount,
-        total: balance.total + transaction.amount,
+        available: newAvailable,
+        total: newAvailable,
       };
       await saveBalance(newBalance);
     }
@@ -217,9 +300,10 @@ export const WalletProvider: React.FC<{ children: React.ReactNode }> = ({ childr
         return false;
       }
 
+      // ✅ Passa o valor negativo corretamente
       await addTransaction({
         type: 'saque',
-        amount: -amount,
+        amount: -Math.abs(amount),
         description: `Saque via PIX - ${pixKey}`,
         status: 'concluido',
       });
@@ -242,6 +326,33 @@ export const WalletProvider: React.FC<{ children: React.ReactNode }> = ({ childr
     return transactions.find(t => t.id === id);
   }, [transactions]);
 
+  // ✅ FUNÇÃO PARA RESETAR DADOS CORROMPIDOS
+  const resetWallet = useCallback(async () => {
+    try {
+      console.log('🔄 [WalletContext] Resetando carteira...');
+      
+      // Remove transações de saque
+      const deliveryOnlyTransactions = transactions.filter(t => t.type === 'entrega');
+      await saveTransactions(deliveryOnlyTransactions);
+      
+      // Recalcula saldo baseado apenas nas entregas concluídas
+      const completedDeliveries = deliveries.filter(d => d.status === 'entregue');
+      const totalEarnings = completedDeliveries.reduce((sum, d) => sum + d.deliveryFee, 0);
+      
+      const newBalance: WalletBalance = {
+        available: totalEarnings,
+        pending: 0,
+        total: totalEarnings,
+      };
+      await saveBalance(newBalance);
+      
+      console.log('✅ [WalletContext] Carteira resetada com sucesso!');
+      console.log(`💰 [WalletContext] Novo saldo: R$ ${totalEarnings.toFixed(2)}`);
+    } catch (error) {
+      console.error('❌ [WalletContext] Erro ao resetar carteira:', error);
+    }
+  }, [transactions, deliveries]);
+
   return (
     <WalletContext.Provider
       value={{
@@ -254,6 +365,7 @@ export const WalletProvider: React.FC<{ children: React.ReactNode }> = ({ childr
         withdraw,
         getFilteredTransactions,
         getTransactionById,
+        resetWallet, // ✅ NOVO
         loading,
       }}
     >
