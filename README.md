@@ -59,13 +59,13 @@ Certifique-se de ter instalado:
 ### **1️⃣ Clone o repositório**
 
 ```bash
-git clone https://github.com/SEU-USUARIO/mobile-entregador.git
+git clone https://github.com/marianaurani/medbox-entregador.git
 ```
 
 ### **2️⃣ Acesse a pasta do projeto**
 
 ```bash
-cd mobile-entregador
+cd medbox-entregador
 ```
 
 ### **3️⃣ Instale as dependências**
@@ -154,9 +154,7 @@ npm run ios
 
 ### 🗺️ **Mapa e Navegação**
 - Visualização de **heat areas** (regiões com mais demanda)
-- Localização em tempo real
 - Navegação GPS integrada
-- Rotas otimizadas
 
 ### 💳 **Carteira Digital**
 - Visualizar saldo disponível
