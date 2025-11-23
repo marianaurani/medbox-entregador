@@ -1,5 +1,5 @@
 // src/screens/menu/NotificationsScreen.tsx
-import React, { useState } from 'react';
+import React from 'react';
 import {
   View,
   Text,
@@ -10,73 +10,27 @@ import {
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
-import { useNavigation } from '@react-navigation/native';
+import { useNavigation, NavigationProp } from '@react-navigation/native';
+import { useNotifications, NotificationType } from '../../contexts/NotificationContext';
 import colors from '../../constants/colors';
 
-type NotificationType = 'delivery' | 'payment' | 'system' | 'promotion';
-
-interface Notification {
-  id: string;
-  type: NotificationType;
-  title: string;
-  message: string;
-  timestamp: Date;
-  read: boolean;
-}
-
-// Mock de notificações
-const mockNotifications: Notification[] = [
-  {
-    id: '1',
-    type: 'delivery',
-    title: 'Nova entrega disponível',
-    message: 'Pedido #12345 aguardando aceite. Distância: 2.5 km',
-    timestamp: new Date(Date.now() - 1000 * 60 * 5), // 5 min atrás
-    read: false,
-  },
-  {
-    id: '2',
-    type: 'payment',
-    title: 'Pagamento recebido',
-    message: 'Você recebeu R$ 15,00 pela entrega #12340',
-    timestamp: new Date(Date.now() - 1000 * 60 * 30), // 30 min atrás
-    read: false,
-  },
-  {
-    id: '3',
-    type: 'system',
-    title: 'Atualização disponível',
-    message: 'Nova versão do app disponível com melhorias de desempenho',
-    timestamp: new Date(Date.now() - 1000 * 60 * 60 * 2), // 2h atrás
-    read: true,
-  },
-  {
-    id: '4',
-    type: 'promotion',
-    title: 'Bônus especial!',
-    message: 'Complete 5 entregas hoje e ganhe R$ 20,00 extras',
-    timestamp: new Date(Date.now() - 1000 * 60 * 60 * 5), // 5h atrás
-    read: true,
-  },
-  {
-    id: '5',
-    type: 'delivery',
-    title: 'Entrega concluída',
-    message: 'Pedido #12338 foi entregue com sucesso',
-    timestamp: new Date(Date.now() - 1000 * 60 * 60 * 24), // 1 dia atrás
-    read: true,
-  },
-];
+type MenuNavigationProp = NavigationProp<{
+  MenuHome: undefined;
+  DeliveryDetails: { deliveryId: string };
+  TransactionDetails: { transactionId: string };
+}>;
 
 const NotificationsScreen: React.FC = () => {
-  const navigation = useNavigation();
-  const [notifications, setNotifications] = useState(mockNotifications);
-  const [settings, setSettings] = useState({
-    deliveries: true,
-    payments: true,
-    promotions: true,
-    system: true,
-  });
+  const navigation = useNavigation<MenuNavigationProp>();
+  const {
+    notifications,
+    unreadCount,
+    markAsRead,
+    markAllAsRead,
+    clearAll,
+    settings,
+    updateSettings,
+  } = useNotifications();
 
   const getNotificationIcon = (type: NotificationType) => {
     switch (type) {
@@ -107,29 +61,24 @@ const NotificationsScreen: React.FC = () => {
     return date.toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit' });
   };
 
-  const markAsRead = (id: string) => {
-    setNotifications(prev =>
-      prev.map(notif => (notif.id === id ? { ...notif, read: true } : notif))
-    );
+  const handleNotificationPress = (notification: any) => {
+    markAsRead(notification.id);
+
+    // Navega para a tela correspondente se houver dados
+    if (notification.deliveryId) {
+      navigation.navigate('DeliveryDetails', { deliveryId: notification.deliveryId });
+    } else if (notification.transactionId) {
+      navigation.navigate('TransactionDetails', { transactionId: notification.transactionId });
+    }
   };
 
-  const markAllAsRead = () => {
-    setNotifications(prev => prev.map(notif => ({ ...notif, read: true })));
-  };
-
-  const clearAll = () => {
-    setNotifications([]);
-  };
-
-  const unreadCount = notifications.filter(n => !n.read).length;
-
-  const renderNotification = ({ item }: { item: Notification }) => {
+  const renderNotification = ({ item }: { item: any }) => {
     const icon = getNotificationIcon(item.type);
 
     return (
       <TouchableOpacity
         style={[styles.notificationItem, !item.read && styles.unreadNotification]}
-        onPress={() => markAsRead(item.id)}
+        onPress={() => handleNotificationPress(item)}
         activeOpacity={0.7}
       >
         <View style={[styles.notificationIcon, { backgroundColor: `${icon.color}15` }]}>
@@ -165,7 +114,7 @@ const NotificationsScreen: React.FC = () => {
           </View>
           <Switch
             value={settings.deliveries}
-            onValueChange={(value) => setSettings(prev => ({ ...prev, deliveries: value }))}
+            onValueChange={(value) => updateSettings({ deliveries: value })}
             trackColor={{ false: colors.border, true: colors.primary }}
             thumbColor="white"
           />
@@ -183,7 +132,7 @@ const NotificationsScreen: React.FC = () => {
           </View>
           <Switch
             value={settings.payments}
-            onValueChange={(value) => setSettings(prev => ({ ...prev, payments: value }))}
+            onValueChange={(value) => updateSettings({ payments: value })}
             trackColor={{ false: colors.border, true: colors.primary }}
             thumbColor="white"
           />
@@ -201,7 +150,7 @@ const NotificationsScreen: React.FC = () => {
           </View>
           <Switch
             value={settings.promotions}
-            onValueChange={(value) => setSettings(prev => ({ ...prev, promotions: value }))}
+            onValueChange={(value) => updateSettings({ promotions: value })}
             trackColor={{ false: colors.border, true: colors.primary }}
             thumbColor="white"
           />
@@ -219,7 +168,7 @@ const NotificationsScreen: React.FC = () => {
           </View>
           <Switch
             value={settings.system}
-            onValueChange={(value) => setSettings(prev => ({ ...prev, system: value }))}
+            onValueChange={(value) => updateSettings({ system: value })}
             trackColor={{ false: colors.border, true: colors.primary }}
             thumbColor="white"
           />

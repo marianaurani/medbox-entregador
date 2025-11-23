@@ -8,6 +8,7 @@ import { BankProvider } from './src/contexts/BankContext';
 import { RootNavigator } from './src/navigation/RootNavigator';
 import AutoDeliveryGenerator from './src/components/AutoDeliveryGenerator';
 import { ChatProvider } from './src/contexts/ChatContext';
+import { NotificationProvider } from './src/contexts/NotificationContext';
 // import AsyncStorage from '@react-native-async-storage/async-storage';
 // import { useEffect } from 'react';
 
@@ -29,7 +30,8 @@ export default function App() {
   return (
     <SafeAreaProvider>
       <AuthProvider>
-        <ChatProvider>
+        <NotificationProvider>
+          <ChatProvider>
             <DeliveryProvider>
               <WalletProvider>
                 <BankProvider>
@@ -47,7 +49,8 @@ export default function App() {
                 </BankProvider>
               </WalletProvider>
             </DeliveryProvider>
-        </ChatProvider>
+          </ChatProvider>
+        </NotificationProvider>
       </AuthProvider>
     </SafeAreaProvider>
   );

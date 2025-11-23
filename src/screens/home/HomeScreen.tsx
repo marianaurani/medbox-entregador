@@ -13,6 +13,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { useNavigation, NavigationProp } from '@react-navigation/native';
 import { useAuth } from '../../contexts/AuthContext';
 import { useDelivery } from '../../contexts/DeliveryContext';
+import { useNotifications } from '../../contexts/NotificationContext';
 import { mockEarnings } from '../../utils/mockData';
 import colors from '../../constants/colors';
 
@@ -20,19 +21,23 @@ type MainTabParamList = {
   Home: undefined;
   Delivery: undefined;
   Wallet: undefined;
-  Menu: undefined;
+  Menu: { screen?: string };
 };
 
 const HomeScreen: React.FC = () => {
   const navigation = useNavigation<NavigationProp<MainTabParamList>>();
   const { user, updateStatus } = useAuth();
   const { getAvailableDeliveries } = useDelivery();
+  const { unreadCount } = useNotifications();
   const [isAvailable, setIsAvailable] = useState(user?.status === 'disponivel');
   const [showEarningsInfo, setShowEarningsInfo] = useState(false);
   const [showHeatmapInfo, setShowHeatmapInfo] = useState(false);
 
   const earnings = mockEarnings;
   const availableDeliveries = getAvailableDeliveries();
+
+  // Garante que unreadCount seja sempre um número
+  const safeUnreadCount = typeof unreadCount === 'number' ? unreadCount : 0;
 
   // Localização do entregador (simulada - Brasília centro)
   const delivererLocation = { latitude: -15.7942, longitude: -47.8822 };
@@ -59,19 +64,37 @@ const HomeScreen: React.FC = () => {
     navigation.navigate('Delivery');
   };
 
+  const handleNotifications = () => {
+    // Navega para a tab Menu e depois para a tela Notifications
+    navigation.navigate('Menu', { 
+      screen: 'Notifications'
+    });
+  };
+
   return (
     <SafeAreaView style={styles.container} edges={['top']}>
       {/* Header */}
       <View style={styles.header}>
         <View style={styles.logoContainer}>
           <View style={styles.logoIcon}>
-            <Text style={styles.logoPlus}>+</Text>
+            <Text style={styles.logoPlus}>✱</Text>
           </View>
           <Text style={styles.logoText}>MedBox</Text>
         </View>
 
-        <TouchableOpacity style={styles.notificationButton}>
+        <TouchableOpacity 
+          style={styles.notificationButton}
+          onPress={handleNotifications}
+          activeOpacity={0.7}
+        >
           <Ionicons name="notifications-outline" size={24} color={colors.text} />
+          {safeUnreadCount > 0 && (
+            <View style={styles.notificationBadge}>
+              <Text style={styles.notificationBadgeText}>
+                {safeUnreadCount > 9 ? '9+' : safeUnreadCount}
+              </Text>
+            </View>
+          )}
         </TouchableOpacity>
       </View>
 
@@ -436,12 +459,12 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   logoPlus: {
-    fontSize: 24,
+    fontSize: 22,
     fontWeight: 'bold',
     color: '#FFFFFF',
   },
   logoText: {
-    fontSize: 18,
+    fontSize: 20,
     fontWeight: 'bold',
     color: colors.text,
   },
@@ -450,6 +473,25 @@ const styles = StyleSheet.create({
     height: 40,
     justifyContent: 'center',
     alignItems: 'center',
+    position: 'relative',
+  },
+  notificationBadge: {
+    position: 'absolute',
+    top: 6,
+    right: 6,
+    backgroundColor: colors.error,
+    borderRadius: 10,
+    minWidth: 18,
+    height: 18,
+    justifyContent: 'center',
+    alignItems: 'center',
+    borderWidth: 2,
+    borderColor: colors.backgroundLight,
+  },
+  notificationBadgeText: {
+    color: 'white',
+    fontSize: 10,
+    fontWeight: 'bold',
   },
   mapContainer: {
     flex: 1,
@@ -629,27 +671,6 @@ const styles = StyleSheet.create({
   },
   statusSubtext: {
     fontSize: 11,
-  },
-  viewOrdersButton: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    gap: 8,
-    backgroundColor: 'white',
-    paddingVertical: 14,
-    borderRadius: 12,
-    borderWidth: 2,
-    borderColor: colors.primary,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 4,
-    elevation: 3,
-  },
-  viewOrdersText: {
-    fontSize: 15,
-    color: colors.primary,
-    fontWeight: '600',
   },
   modalOverlay: {
     position: 'absolute',

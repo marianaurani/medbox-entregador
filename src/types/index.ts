@@ -1,5 +1,7 @@
 // src/types/index.ts
 
+import { NavigatorScreenParams } from '@react-navigation/native';
+
 // ==================== VEHICLE TYPE ====================
 export type VehicleType = 'moto' | 'carro' | 'bike';
 
@@ -22,22 +24,25 @@ export type AuthStackParamList = {
   RegistrationComplete: undefined;
 };
 
+// ✅ CORRIGIDO - MainTabParamList agora aceita navegação aninhada
 export type MainTabParamList = {
   Home: undefined;
-  Delivery: undefined;
-  Wallet: undefined;
-  Menu: undefined;
+  Delivery: NavigatorScreenParams<DeliveryStackParamList>;
+  Wallet: NavigatorScreenParams<WalletStackParamList>;
+  Menu: NavigatorScreenParams<MenuStackParamList>;
 };
 
 export type DeliveryStackParamList = {
   DeliveryList: undefined;
   DeliveryDetails: { deliveryId: string };
   DeliveryInProgress: { deliveryId: string };
-  Chat: { chatType: ChatType; chatName: string; deliveryId?: string }; // ✅ NOVO
+  Chat: { chatType: ChatType; chatName: string; deliveryId?: string };
 };
 
+// ✅ CORRIGIDO - Adicionada rota Profile
 export type MenuStackParamList = {
   MenuHome: undefined;
+  Profile: undefined; // ✅ ADICIONADO
   BankData: undefined;
   BankAccount: undefined;
   AddPixKey: { pixKeyId?: string } | undefined;

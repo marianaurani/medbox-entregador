@@ -1,4 +1,4 @@
-// src/screens/menu/MenuScreen.tsx (ALL-IN-ONE COMPLETO)
+// src/screens/menu/MenuScreen.tsx
 import React, { useState } from 'react';
 import {
   View,
@@ -322,26 +322,10 @@ const MenuScreen: React.FC = () => {
           </TouchableOpacity>
         </View>
 
-        {/* Quick Actions Grid */}
+        {/* Quick Actions Grid - APENAS 3 ITENS */}
         <View style={styles.quickActionsSection}>
           <Text style={styles.sectionTitle}>Acesso Rápido</Text>
           <View style={styles.quickActionsGrid}>
-            <TouchableOpacity 
-              style={styles.quickActionCard}
-              onPress={() => navigation.navigate('BankData')}
-            >
-              <View style={[styles.quickActionIcon, { backgroundColor: colors.primary + '20' }]}>
-                <Ionicons name="wallet" size={28} color={colors.primary} />
-              </View>
-              <Text style={styles.quickActionTitle}>Dados Bancários</Text>
-              <View style={[styles.statusBadge, { backgroundColor: bankStatus.color + '20' }]}>
-                <View style={[styles.statusDot, { backgroundColor: bankStatus.color }]} />
-                <Text style={[styles.statusText, { color: bankStatus.color }]}>
-                  {bankStatus.text}
-                </Text>
-              </View>
-            </TouchableOpacity>
-
             <TouchableOpacity 
               style={styles.quickActionCard}
               onPress={() => navigation.navigate('Reports')}
@@ -705,13 +689,12 @@ const styles = StyleSheet.create({
   },
   quickActionsGrid: {
     flexDirection: 'row',
-    flexWrap: 'wrap',
-    gap: 12,
+    gap: 10,
   },
   quickActionCard: {
-    width: '48%',
+    flex: 1,
     backgroundColor: colors.backgroundLight,
-    padding: 18,
+    padding: 14,
     borderRadius: 12,
     alignItems: 'center',
     shadowColor: '#000',
@@ -721,42 +704,24 @@ const styles = StyleSheet.create({
     elevation: 2,
   },
   quickActionIcon: {
-    width: 56,
-    height: 56,
-    borderRadius: 28,
+    width: 48,
+    height: 48,
+    borderRadius: 24,
     justifyContent: 'center',
     alignItems: 'center',
-    marginBottom: 12,
+    marginBottom: 8,
   },
   quickActionTitle: {
-    fontSize: 14,
+    fontSize: 12,
     fontWeight: '600',
     color: colors.text,
     textAlign: 'center',
-    marginBottom: 4,
+    marginBottom: 2,
   },
   quickActionSubtitle: {
-    fontSize: 11,
+    fontSize: 9,
     color: colors.textSecondary,
     textAlign: 'center',
-  },
-  statusBadge: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    paddingHorizontal: 8,
-    paddingVertical: 4,
-    borderRadius: 12,
-    gap: 4,
-    marginTop: 4,
-  },
-  statusDot: {
-    width: 6,
-    height: 6,
-    borderRadius: 3,
-  },
-  statusText: {
-    fontSize: 10,
-    fontWeight: '600',
   },
   notificationBadge: {
     position: 'absolute',

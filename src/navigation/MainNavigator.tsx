@@ -10,7 +10,7 @@ import colors from '../constants/colors';
 import HomeScreen from '../screens/home/HomeScreen';
 import { DeliveryNavigator } from './DeliveryNavigator';
 import { WalletNavigator } from './WalletNavigator';
-import { MenuNavigator } from './MenuNavigator'; // ✅ NOVO - Importar MenuNavigator
+import { MenuNavigator } from './MenuNavigator';
 
 const Tab = createBottomTabNavigator<MainTabParamList>();
 
@@ -72,7 +72,6 @@ const TabNavigatorWrapper = () => {
           }}
         />
         
-        {/* ✅ ATUALIZADO - Usar MenuNavigator em vez de MenuScreen */}
         <Tab.Screen
           name="Menu"
           component={MenuNavigator}
@@ -82,6 +81,23 @@ const TabNavigatorWrapper = () => {
               <Ionicons name="menu" size={size} color={color} />
             ),
           }}
+          listeners={({ navigation, route }) => ({
+            tabPress: (e) => {
+              // Pega o estado atual da navegação do Menu
+              const state = navigation.getState();
+              const menuRoute = state.routes.find((r: any) => r.name === 'Menu');
+              
+              // Se o Menu já está ativo e não está em MenuHome, reseta para MenuHome
+              if (menuRoute && state.index === state.routes.indexOf(menuRoute)) {
+                const menuState = menuRoute.state;
+                if (menuState && menuState.index !== 0) {
+                  // Não está em MenuHome, então navega
+                  e.preventDefault();
+                  navigation.navigate('Menu', { screen: 'MenuHome' });
+                }
+              }
+            },
+          })}
         />
       </Tab.Navigator>
     </SafeAreaView>
