@@ -13,8 +13,11 @@ import CreatePasswordScreen from '../screens/auth/CreatePasswordScreen';
 import VehicleSelectionScreen from '../screens/auth/VehicleSelectionScreen';
 import PhotoUploadScreen from '../screens/auth/PhotoUploadScreen';
 import CNHUploadScreen from '../screens/auth/CNHUploadScreen';
-import IDUploadScreen from '../screens/auth/IDUploadScreen'; // ✅ NOVO
+import IDUploadScreen from '../screens/auth/IDUploadScreen';
 import RegistrationCompleteScreen from '../screens/auth/RegistrationCompleteScreen';
+// ✅ NOVAS TELAS
+import ForgotPasswordScreen from '../screens/auth/ForgotPasswordScreen';
+import ResetPasswordScreen from '../screens/auth/ResetPasswordScreen';
 
 const Stack = createNativeStackNavigator<AuthStackParamList>();
 
@@ -30,6 +33,9 @@ const AuthNavigator: React.FC = () => {
       <Stack.Screen name="Welcome" component={WelcomeScreen} />
       <Stack.Screen name="Login" component={LoginScreen} />
       <Stack.Screen name="Register" component={RegisterScreen} />
+      {/* ✅ NOVAS ROTAS */}
+      <Stack.Screen name="ForgotPassword" component={ForgotPasswordScreen} />
+      <Stack.Screen name="ResetPassword" component={ResetPasswordScreen} />
       <Stack.Screen name="VerificationMethod" component={VerificationMethodScreen} />
       <Stack.Screen name="SecurityCode" component={SecurityCodeScreen} />
       <Stack.Screen name="CreatePassword" component={CreatePasswordScreen} />

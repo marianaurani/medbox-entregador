@@ -171,6 +171,7 @@ const LoginScreen: React.FC<Props> = ({ navigation }) => {
             {/* Link "Esqueceu a senha?" */}
             <TouchableOpacity 
               style={styles.forgotPasswordButton}
+              onPress={() => navigation.navigate('ForgotPassword')} // ✅ ADICIONAR
               disabled={loading}
             >
               <Text style={styles.forgotPasswordText}>Esqueceu a senha?</Text>

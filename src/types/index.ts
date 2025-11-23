@@ -15,13 +15,15 @@ export type AuthStackParamList = {
   Welcome: undefined;
   Login: undefined;
   Register: undefined;
+  ForgotPassword: undefined; // ✅ ADICIONADO
+  ResetPassword: { email: string; verificationCode: string }; // ✅ ADICIONADO
   VerificationMethod: { email: string; phone: string };
   SecurityCode: { method: 'email' | 'sms'; contact: string };
   CreatePassword: undefined;
   VehicleSelection: undefined;
   PhotoUpload: { vehicleType: VehicleType };
   CNHUpload: { vehicleType: VehicleType };
-  IDUpload: { vehicleType: VehicleType }; // ✅ NOVA ROTA
+  IDUpload: { vehicleType: VehicleType };
   RegistrationComplete: undefined;
 };
 
@@ -89,7 +91,6 @@ export interface User {
 }
 
 // ==================== AUTH TYPES ====================
-// ✅ ATUALIZADO - email e password agora são obrigatórios
 export interface SignUpData {
   name: string;
   cpf: string;
@@ -99,7 +100,7 @@ export interface SignUpData {
   vehicleType?: VehicleType;
 }
 
-// ✅ ATUALIZADO - signIn agora recebe email e password
+// ✅ ATUALIZADO - Adicionadas funções de recuperação de senha
 export interface AuthContextData {
   user: User | null;
   isLoading: boolean;
@@ -110,9 +111,12 @@ export interface AuthContextData {
   updateStatus: (status: UserStatus) => Promise<void>;
   updateProfile?: (data: Partial<User>) => Promise<void>;
   completeSignUp?: () => Promise<void>;
-  getTempSignupData?: () => Promise<SignUpData | null>; // ✅ ADICIONADO
+  getTempSignupData?: () => Promise<SignUpData | null>;
   saveTempVehicleType?: (vehicleType: VehicleType) => Promise<void>;
   getTempVehicleType?: () => Promise<VehicleType | null>;
+  // ✅ NOVAS FUNÇÕES PARA RECUPERAÇÃO DE SENHA
+  getStoredCredentials?: () => Promise<{ email: string; password: string } | null>;
+  resetPassword?: (email: string, newPassword: string) => Promise<void>;
 }
 
 // ==================== DELIVERY TYPES ====================
