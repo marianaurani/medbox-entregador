@@ -59,7 +59,7 @@ Certifique-se de ter instalado:
 ### **1️⃣ Clone o repositório**
 
 ```bash
-git clone https://github.com/marianaurani/medbox-entregador.git
+git clone https://github.com/SEU-USUARIO/mobile-entregador.git
 ```
 
 ### **2️⃣ Acesse a pasta do projeto**
@@ -127,7 +127,13 @@ npm run android
 npm run ios
 ```
 
-> ⚠️ **Atenção:** É necessário ter o Android Studio (Android) ou Xcode (iOS) configurado.
+> ⚠️ **Atenção:** 
+> - É necessário ter o Android Studio (Android) ou Xcode (iOS) configurado
+> - **Câmera, ligação telefônica e navegação GPS terão funcionalidade limitada no emulador**
+> - O app funciona normalmente, mas essas features não executarão ações reais
+> - Para a **câmera**, será possível selecionar imagens da galeria (não abre câmera física)
+> - Para **ligação e Google Maps**, os botões funcionam mas não executam as ações
+> - **Para testar TODAS as funcionalidades completas, use o Expo Go no celular físico** 📱
 
 ---
 
