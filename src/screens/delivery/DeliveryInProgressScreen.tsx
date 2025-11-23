@@ -16,12 +16,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { useNavigation, useRoute, NavigationProp } from '@react-navigation/native';
 import { useDelivery } from '../../contexts/DeliveryContext';
 import colors from '../../constants/colors';
-
-type DeliveryStackParamList = {
-  DeliveryList: undefined;
-  DeliveryDetails: { deliveryId: string };
-  DeliveryInProgress: { deliveryId: string };
-};
+import { DeliveryStackParamList } from '../../types';
 
 const DeliveryInProgressScreen: React.FC = () => {
   const navigation = useNavigation<NavigationProp<DeliveryStackParamList>>();
@@ -65,6 +60,24 @@ const DeliveryInProgressScreen: React.FC = () => {
         onPress: () => Linking.openURL(`tel:${phone}`),
       },
     ]);
+  };
+
+  // ✅ NOVO - Função para abrir chat com o cliente
+  const handleChatCustomer = () => {
+    navigation.navigate('Chat', {
+      chatType: 'customer',
+      chatName: delivery.customer.name,
+      deliveryId: delivery.id,
+    });
+  };
+
+  // ✅ NOVO - Função para abrir chat com a farmácia
+  const handleChatPharmacy = () => {
+    navigation.navigate('Chat', {
+      chatType: 'pharmacy',
+      chatName: delivery.pharmacy.name,
+      deliveryId: delivery.id,
+    });
   };
 
   const handleNavigate = (lat: number, lon: number) => {
@@ -201,6 +214,14 @@ const DeliveryInProgressScreen: React.FC = () => {
                 <Ionicons name="call" size={18} color="white" />
                 <Text style={styles.callButtonText}>Ligar</Text>
               </TouchableOpacity>
+              {/* ✅ NOVO - Botão de Chat com Farmácia */}
+              <TouchableOpacity
+                style={styles.chatButton}
+                onPress={handleChatPharmacy}
+              >
+                <Ionicons name="chatbubble" size={18} color="white" />
+                <Text style={styles.chatButtonText}>Chat</Text>
+              </TouchableOpacity>
               <TouchableOpacity
                 style={styles.navigateButton}
                 onPress={() =>
@@ -232,15 +253,24 @@ const DeliveryInProgressScreen: React.FC = () => {
                 )}
               </View>
             </View>
-            {delivery.status === 'em_rota' && (
-              <View style={styles.actionButtons}>
-                <TouchableOpacity
-                  style={styles.callButton}
-                  onPress={() => handleCall(delivery.customer.phone, delivery.customer.name)}
-                >
-                  <Ionicons name="call" size={18} color="white" />
-                  <Text style={styles.callButtonText}>Ligar</Text>
-                </TouchableOpacity>
+            {/* ✅ ATUALIZADO - Sempre mostra os botões (não só quando em_rota) */}
+            <View style={styles.actionButtons}>
+              <TouchableOpacity
+                style={styles.callButton}
+                onPress={() => handleCall(delivery.customer.phone, delivery.customer.name)}
+              >
+                <Ionicons name="call" size={18} color="white" />
+                <Text style={styles.callButtonText}>Ligar</Text>
+              </TouchableOpacity>
+              {/* ✅ NOVO - Botão de Chat com Cliente */}
+              <TouchableOpacity
+                style={styles.chatButton}
+                onPress={handleChatCustomer}
+              >
+                <Ionicons name="chatbubble" size={18} color="white" />
+                <Text style={styles.chatButtonText}>Chat</Text>
+              </TouchableOpacity>
+              {delivery.status === 'em_rota' && (
                 <TouchableOpacity
                   style={styles.navigateButton}
                   onPress={() =>
@@ -250,8 +280,8 @@ const DeliveryInProgressScreen: React.FC = () => {
                   <Ionicons name="navigate" size={18} color="white" />
                   <Text style={styles.navigateButtonText}>Navegar</Text>
                 </TouchableOpacity>
-              </View>
-            )}
+              )}
+            </View>
           </View>
         </View>
 
@@ -529,6 +559,22 @@ const styles = StyleSheet.create({
     gap: 6,
   },
   callButtonText: {
+    color: 'white',
+    fontSize: 14,
+    fontWeight: '600',
+  },
+  // ✅ NOVO - Estilos do botão de Chat
+  chatButton: {
+    flex: 1,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: colors.success,
+    paddingVertical: 10,
+    borderRadius: 8,
+    gap: 6,
+  },
+  chatButtonText: {
     color: 'white',
     fontSize: 14,
     fontWeight: '600',

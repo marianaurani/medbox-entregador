@@ -13,11 +13,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { useNavigation, NavigationProp } from '@react-navigation/native';
 import { useAuth } from '../../contexts/AuthContext';
 import colors from '../../constants/colors';
-
-type MenuStackParamList = {
-  MenuHome: undefined;
-  Profile: undefined;
-};
+import { MenuStackParamList } from '../../types';
 
 const MenuScreen: React.FC = () => {
   const navigation = useNavigation<NavigationProp<MenuStackParamList>>();
@@ -36,6 +32,14 @@ const MenuScreen: React.FC = () => {
         },
       ]
     );
+  };
+
+  // ✅ NOVO - Função para abrir chat de suporte
+  const handleSupportChat = () => {
+    navigation.navigate('Chat', {
+      chatType: 'support',
+      chatName: 'Suporte MedBox',
+    });
   };
 
   const MenuItem = ({ 
@@ -117,11 +121,12 @@ const MenuScreen: React.FC = () => {
               color={colors.warning}
             />
             <View style={styles.divider} />
+            {/* ✅ ATUALIZADO - Chat de Suporte */}
             <MenuItem
               icon="chatbubble-outline"
-              title="Falar com Suporte"
-              subtitle="Entre em contato conosco"
-              onPress={() => Alert.alert('Suporte', 'Em desenvolvimento...')}
+              title="Chat de Suporte"
+              subtitle="Converse com nossa equipe"
+              onPress={handleSupportChat}
               color={colors.info}
             />
             <View style={styles.divider} />

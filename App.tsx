@@ -7,6 +7,7 @@ import { WalletProvider } from './src/contexts/WalletContext';
 import { BankProvider } from './src/contexts/BankContext';
 import { RootNavigator } from './src/navigation/RootNavigator';
 import AutoDeliveryGenerator from './src/components/AutoDeliveryGenerator';
+import { ChatProvider } from './src/contexts/ChatContext';
 // import AsyncStorage from '@react-native-async-storage/async-storage';
 // import { useEffect } from 'react';
 
@@ -28,23 +29,25 @@ export default function App() {
   return (
     <SafeAreaProvider>
       <AuthProvider>
-        <DeliveryProvider>
-          <WalletProvider>
-            <BankProvider>
-              {/* 🎲 Sistema automático de geração de pedidos */}
-              <AutoDeliveryGenerator 
-                enabled={true}           // true = ligado, false = desligado
-                minAvailable={2}         // Gera quando tiver menos de 2 pedidos
-                maxAvailable={8}         // Máximo de 8 pedidos disponíveis
-                checkInterval={3}        // Verifica a cada 3 minutos
-                randomInterval={true}    // Intervalo aleatório (mais realista)
-              />
-              
-              <RootNavigator />
-              <StatusBar style="auto" />
-            </BankProvider>
-          </WalletProvider>
-        </DeliveryProvider>
+        <ChatProvider>
+            <DeliveryProvider>
+              <WalletProvider>
+                <BankProvider>
+                  {/* 🎲 Sistema automático de geração de pedidos */}
+                  <AutoDeliveryGenerator 
+                    enabled={true}           // true = ligado, false = desligado
+                    minAvailable={2}         // Gera quando tiver menos de 2 pedidos
+                    maxAvailable={8}         // Máximo de 8 pedidos disponíveis
+                    checkInterval={3}        // Verifica a cada 3 minutos
+                    randomInterval={true}    // Intervalo aleatório (mais realista)
+                  />
+                  
+                  <RootNavigator />
+                  <StatusBar style="auto" />
+                </BankProvider>
+              </WalletProvider>
+            </DeliveryProvider>
+        </ChatProvider>
       </AuthProvider>
     </SafeAreaProvider>
   );

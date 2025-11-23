@@ -3,6 +3,10 @@
 // ==================== VEHICLE TYPE ====================
 export type VehicleType = 'moto' | 'carro' | 'bike';
 
+// ==================== CHAT TYPES ==================== ✅ NOVO
+export type ChatType = 'support' | 'customer' | 'pharmacy';
+export type MessageStatus = 'sending' | 'sent' | 'delivered' | 'read';
+
 // ==================== NAVIGATION TYPES ====================
 export type AuthStackParamList = {
   Splash: undefined;
@@ -29,6 +33,13 @@ export type DeliveryStackParamList = {
   DeliveryList: undefined;
   DeliveryDetails: { deliveryId: string };
   DeliveryInProgress: { deliveryId: string };
+  Chat: { chatType: ChatType; chatName: string; deliveryId?: string }; // ✅ NOVO
+};
+
+export type MenuStackParamList = { // ✅ NOVO
+  MenuHome: undefined;
+  Profile: undefined;
+  Chat: { chatType: ChatType; chatName: string; deliveryId?: string };
 };
 
 export type WalletStackParamList = {
@@ -36,7 +47,7 @@ export type WalletStackParamList = {
   Transactions: undefined;
   Withdraw: undefined;
   WalletSettings: undefined;
-  TransactionDetails: { transactionId: string }; // ✅ NOVO
+  TransactionDetails: { transactionId: string };
 };
 
 export type ProfileStackParamList = {
@@ -147,7 +158,7 @@ export interface Transaction {
   description: string;
   date: Date;
   status: 'concluido' | 'pendente' | 'cancelado';
-  deliveryId?: string; // ✅ ADICIONADO - Conecta com a entrega
+  deliveryId?: string;
 }
 
 export interface Earnings {
@@ -212,4 +223,35 @@ export interface DeliveryContextData {
   cancelDelivery: (deliveryId: string, reason: string) => Promise<void>;
   refreshDeliveries: () => Promise<void>;
   getAvailableDeliveries: () => Delivery[];
+}
+
+// ==================== CHAT TYPES ==================== ✅ NOVO
+export interface Message {
+  id: string;
+  text: string;
+  sender: 'user' | 'other';
+  timestamp: Date;
+  status: MessageStatus;
+  chatType: ChatType;
+  deliveryId?: string;
+}
+
+export interface Chat {
+  id: string;
+  type: ChatType;
+  name: string;
+  lastMessage?: string;
+  lastMessageTime?: Date;
+  unreadCount: number;
+  deliveryId?: string;
+}
+
+export interface ChatContextData {
+  chats: Chat[];
+  messages: Message[];
+  sendMessage: (text: string, chatType: ChatType, deliveryId?: string) => Promise<void>;
+  getMessagesByChat: (chatType: ChatType, deliveryId?: string) => Message[];
+  markAsRead: (chatType: ChatType, deliveryId?: string) => Promise<void>;
+  getChatById: (chatType: ChatType, deliveryId?: string) => Chat | undefined;
+  isLoading: boolean;
 }

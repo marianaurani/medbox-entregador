@@ -4,12 +4,8 @@ import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import DeliveryListScreen from '../screens/delivery/DeliveryListScreen';
 import DeliveryDetailsScreen from '../screens/delivery/DeliveryDetailsScreen';
 import DeliveryInProgressScreen from '../screens/delivery/DeliveryInProgressScreen';
-
-export type DeliveryStackParamList = {
-  DeliveryList: undefined;
-  DeliveryDetails: { deliveryId: string };
-  DeliveryInProgress: { deliveryId: string };
-};
+import ChatScreen from '../screens/chat/ChatScreen'; // ✅ NOVO
+import { DeliveryStackParamList } from '../types';
 
 const Stack = createNativeStackNavigator<DeliveryStackParamList>();
 
@@ -31,6 +27,11 @@ export const DeliveryNavigator: React.FC = () => {
       <Stack.Screen 
         name="DeliveryInProgress" 
         component={DeliveryInProgressScreen}
+      />
+      {/* ✅ NOVO - Tela de Chat */}
+      <Stack.Screen 
+        name="Chat" 
+        component={ChatScreen}
       />
     </Stack.Navigator>
   );

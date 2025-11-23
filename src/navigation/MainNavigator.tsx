@@ -1,8 +1,7 @@
 // src/navigation/MainNavigator.tsx
 import React from 'react';
-import { Platform, View, StyleSheet } from 'react-native';
+import { StyleSheet } from 'react-native';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
-import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { MainTabParamList } from '../types';
@@ -11,21 +10,9 @@ import colors from '../constants/colors';
 import HomeScreen from '../screens/home/HomeScreen';
 import { DeliveryNavigator } from './DeliveryNavigator';
 import { WalletNavigator } from './WalletNavigator';
-import { ProfileNavigator } from './ProfileNavigator';
-import MenuScreen from '../screens/menu/MenuScreen';
+import { MenuNavigator } from './MenuNavigator'; // ✅ NOVO - Importar MenuNavigator
 
 const Tab = createBottomTabNavigator<MainTabParamList>();
-const MenuStack = createNativeStackNavigator();
-
-// Criar o MenuNavigator que inclui o ProfileNavigator
-const MenuNavigator = () => {
-  return (
-    <MenuStack.Navigator screenOptions={{ headerShown: false }}>
-      <MenuStack.Screen name="MenuHome" component={MenuScreen} />
-      <MenuStack.Screen name="Profile" component={ProfileNavigator} />
-    </MenuStack.Navigator>
-  );
-};
 
 // Wrapper para garantir SafeArea no Tab Navigator
 const TabNavigatorWrapper = () => {
@@ -85,6 +72,7 @@ const TabNavigatorWrapper = () => {
           }}
         />
         
+        {/* ✅ ATUALIZADO - Usar MenuNavigator em vez de MenuScreen */}
         <Tab.Screen
           name="Menu"
           component={MenuNavigator}
