@@ -26,7 +26,7 @@ const SplashScreen: React.FC<Props> = ({ navigation }) => {
         resizeMode="contain"
       />
 
-      {/* Logo MedBox - MENOR */}
+      {/* ✅ Logo MedBox - MAIOR */}
       <View style={styles.logoContainer}>
         <Text style={styles.logoPlus}>+</Text>
         <Text style={styles.logoText}>MedBox</Text>
@@ -45,24 +45,25 @@ const styles = StyleSheet.create({
     padding: 20,
   },
   illustration: {
-    width: 200, // Reduzido
-    height: 200, // Reduzido
-    marginBottom: 40, // Reduzido de 60
+    width: 300, // Aumentado de 200 para 300 (50% maior)
+    height: 300, // Aumentado de 200 para 300 (50% maior)
+    marginBottom: 60, // Aumentado de 40 para 60
   },
   logoContainer: {
     flexDirection: 'row',
     alignItems: 'center',
   },
+  // ✅ LOGO MAIOR
   logoPlus: {
-    fontSize: 24, // Reduzido de 32
+    fontSize: 36, // Aumentado de 24 para 36
     fontWeight: 'bold',
     color: colors.primary,
   },
   logoText: {
-    fontSize: 28, // Reduzido de 36
+    fontSize: 42, // Aumentado de 28 para 42
     fontWeight: 'bold',
     color: colors.primary,
-    marginHorizontal: 6, // Reduzido de 8
+    marginHorizontal: 10, // Aumentado de 6 para 10
   },
 });
 
