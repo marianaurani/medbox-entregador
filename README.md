@@ -1,150 +1,209 @@
 # 📦 Mobile Entregador
 
-Aplicativo mobile para entregadores gerenciarem suas entregas, carteira digital e dados bancários.
+> Aplicativo mobile para entregadores de farmácias gerenciarem entregas, carteira digital e perfil profissional.
 
-## 🚀 Tecnologias
+<div align="center">
 
-- **React Native** com **Expo SDK 54**
-- **TypeScript**
-- **React Navigation** (Bottom Tabs + Native Stack)
-- **Context API** para gerenciamento de estado
-- **React Native Maps** para mapas e localização
-- **Expo Image Picker** para upload de fotos
-- **AsyncStorage** para armazenamento local
+![React Native](https://img.shields.io/badge/React_Native-20232A?style=for-the-badge&logo=react&logoColor=61DAFB)
+![Expo](https://img.shields.io/badge/Expo-000020?style=for-the-badge&logo=expo&logoColor=white)
+![TypeScript](https://img.shields.io/badge/TypeScript-007ACC?style=for-the-badge&logo=typescript&logoColor=white)
+
+</div>
+
+---
+
+## 📱 Sobre o Projeto
+
+Aplicativo desenvolvido para **fins acadêmicos** como parte da disciplina de Desenvolvimento Mobile.
+
+Sistema para entregadores que permite:
+- 🗺️ **Visualizar heat areas** (áreas com mais demanda) no mapa
+- 📦 **Aceitar, visualizar detalhes e finalizar pedidos**
+- 💰 Gerenciar carteira digital e realizar saques
+- 📄 Upload de documentos (CNH e foto do entregador)
+- 🚗 Navegar até destinos e acompanhar rotas
+
+---
+
+## 🚀 Tecnologias Utilizadas
+
+- **React Native** `0.81.5`
+- **Expo SDK** `~54.0.23`
+- **TypeScript** `~5.9.2`
+- **React Navigation** (Bottom Tabs + Stack Navigator)
+- **React Native Maps** (visualização de heat areas)
+- **Expo Image Picker** (upload de documentos)
+- **AsyncStorage** (persistência de dados local)
+
+---
+
+## ⚠️ Observações Importantes
+
+- 📱 **O aplicativo funciona APENAS em dispositivos móveis** (celular físico ou emulador)
+- 🚫 **Não funciona na web** devido ao uso de bibliotecas nativas (câmera, mapas)
+- 💾 **Não possui backend** - todos os dados são armazenados localmente com AsyncStorage
+
+---
 
 ## 📋 Pré-requisitos
 
-Antes de começar, você precisa ter instalado:
+Certifique-se de ter instalado:
 
-- [Node.js](https://nodejs.org/) (versão 18 ou superior)
+- [Node.js](https://nodejs.org/) versão 18 ou superior
 - [Git](https://git-scm.com/)
-- [Expo CLI](https://docs.expo.dev/get-started/installation/)
+
+---
+
+## 🔧 Passo a Passo para Executar
+
+### **1️⃣ Clone o repositório**
 
 ```bash
-npm install -g expo-cli
+git clone https://github.com/marianaurani/medbox-entregador.git
 ```
 
-## 🔧 Instalação
-
-1. **Clone o repositório**
+### **2️⃣ Acesse a pasta do projeto**
 
 ```bash
-git clone https://github.com/SEU-USUARIO/mobile-entregador.git
-cd mobile-entregador/entregador
+cd mobile-entregador
 ```
 
-2. **Instale as dependências**
+### **3️⃣ Instale as dependências**
 
 ```bash
 npm install
 ```
 
-> **Nota:** Todas as dependências necessárias já estão listadas no `package.json`, incluindo:
-> - `react-native-maps` para exibição de mapas
-> - `expo-image-picker` para captura e upload de fotos (CNH e foto do entregador)
-> - `@react-navigation/*` para navegação entre telas
-> - `@react-native-async-storage/async-storage` para persistência de dados local
-
-### ⚠️ Configurações importantes
-
-O projeto usa **React Native Maps**. Se você tiver problemas ao executar:
-
-- **No Android**: geralmente funciona sem configuração adicional com Expo
-- **No iOS**: pode ser necessário aceitar permissões de localização no simulador
-- **Para build nativo**: consulte a [documentação do react-native-maps](https://github.com/react-native-maps/react-native-maps)
-
-## ▶️ Como executar
-
-### Iniciar o projeto
+### **4️⃣ Inicie o projeto**
 
 ```bash
 npm start
 ```
 
-ou
+---
+
+## 📱 Como Executar no Expo Go (RECOMENDADO)
+
+> **🎯 Forma recomendada pelo professor para testar o aplicativo**
+
+### **Passo 1: Instale o Expo Go no seu celular**
+
+<div align="center">
+
+| Android | iOS |
+|---------|-----|
+| [<img src="https://play.google.com/intl/en_us/badges/static/images/badges/pt-br_badge_web_generic.png" width="200">](https://play.google.com/store/apps/details?id=host.exp.exponent) | [<img src="https://developer.apple.com/assets/elements/badges/download-on-the-app-store.svg" width="180">](https://apps.apple.com/br/app/expo-go/id982107779) |
+
+</div>
+
+### **Passo 2: Execute o projeto**
 
 ```bash
-expo start
+npm start
 ```
 
-### Executar no dispositivo físico
+### **Passo 3: Escaneie o QR Code**
 
-1. Instale o aplicativo **Expo Go** no seu celular:
-   - [Android](https://play.google.com/store/apps/details?id=host.exp.exponent)
-   - [iOS](https://apps.apple.com/br/app/expo-go/id982107779)
+- **Android:** Abra o app Expo Go e toque em "Scan QR Code"
+- **iOS:** Use a câmera nativa do iPhone para escanear o QR Code
 
-2. Escaneie o QR Code que aparece no terminal ou no navegador
+### **Pronto!** 🎉
 
-### Executar no emulador
+O aplicativo será carregado automaticamente no seu celular!
 
-- **Android:**
+---
+
+## 🖥️ Executar no Emulador (Alternativa)
+
+Se preferir usar emulador:
+
+**Android:**
 ```bash
 npm run android
 ```
 
-- **iOS:** (apenas no macOS)
+**iOS:** *(somente macOS)*
 ```bash
 npm run ios
 ```
 
-## 📱 Funcionalidades
+> ⚠️ **Atenção:** É necessário ter o Android Studio (Android) ou Xcode (iOS) configurado.
 
-### Autenticação
+---
+
+## ✨ Funcionalidades do App
+
+### 🔐 **Autenticação**
 - Login e cadastro de entregadores
-- Verificação por código de segurança (email/SMS)
-- Upload de CNH usando `expo-image-picker`
-- Upload de foto do entregador
-- Seleção de veículo
+- Verificação por código de segurança
+- Upload de CNH e foto usando câmera
+- Seleção de tipo de veículo
 
-### Entregas
-- Lista de entregas disponíveis
-- Detalhes da entrega com mapa (`react-native-maps`)
-- Acompanhamento de entregas em andamento
-- Navegação e rotas no mapa
+### 📦 **Gestão de Pedidos**
+- Visualizar lista de pedidos disponíveis
+- **Aceitar pedidos**
+- **Ver detalhes completos** (endereço, valor, distância)
+- **Finalizar entregas**
+- Visualizar histórico de entregas
 
-### Carteira Digital
-- Visualização de saldo
-- Histórico de transações
-- Solicitação de saque
+### 🗺️ **Mapa e Navegação**
+- Visualização de **heat areas** (regiões com mais demanda)
+- Localização em tempo real
+- Navegação GPS integrada
+- Rotas otimizadas
 
-### Perfil
-- Dados pessoais
-- Dados bancários
-- Gerenciamento de chaves PIX
+### 💳 **Carteira Digital**
+- Visualizar saldo disponível
+- Histórico completo de transações
+- Solicitar saques
+- Gerenciar chaves PIX
 
-## 📂 Estrutura do projeto
+### 👤 **Perfil**
+- Dados pessoais do entregador
+- Dados bancários (banco, agência, conta)
+- Configurações de notificações
+
+---
+
+## 📂 Estrutura do Projeto
 
 ```
 entregador/
 ├── src/
-│   ├── constants/        # Constantes (cores, etc)
-│   ├── contexts/         # Contextos (Auth, Delivery, Wallet, Bank)
-│   ├── navigation/       # Navegação (stacks e navigators)
+│   ├── components/       # Componentes reutilizáveis
+│   ├── constants/        # Cores e constantes
+│   ├── contexts/         # Context API (Auth, Delivery, Wallet, Bank)
+│   ├── navigation/       # Navegação (Bottom Tabs + Stack)
 │   ├── screens/          # Telas da aplicação
-│   │   ├── auth/         # Telas de autenticação
-│   │   ├── delivery/     # Telas de entregas
-│   │   ├── home/         # Tela inicial
-│   │   ├── menu/         # Menu
+│   │   ├── auth/         # Autenticação e cadastro
+│   │   ├── delivery/     # Pedidos e entregas
+│   │   ├── home/         # Tela principal com mapa
+│   │   ├── menu/         # Menu e notificações
 │   │   ├── profile/      # Perfil e dados bancários
 │   │   └── wallet/       # Carteira digital
 │   ├── types/            # Tipos TypeScript
-│   └── utils/            # Utilitários e dados mock
+│   └── utils/            # Funções auxiliares
 ├── assets/               # Imagens e ícones
-├── App.tsx               # Componente principal
-└── package.json          # Dependências do projeto
+├── App.tsx               # Componente raiz
+└── package.json          # Dependências
 ```
-
-## 🛠️ Scripts disponíveis
-
-- `npm start` - Inicia o servidor de desenvolvimento
-- `npm run android` - Executa no emulador Android
-- `npm run ios` - Executa no emulador iOS
-- `npm run web` - Executa no navegador
-
-## 📄 Licença
-
-Este projeto é desenvolvido para fins acadêmicos.
 
 ---
 
-⭐ Se este projeto te ajudou, considere dar uma estrela!
+## 🛠️ Comandos Disponíveis
+
+| Comando | Descrição |
+|---------|-----------|
+| `npm start` | Inicia o servidor de desenvolvimento |
+| `npm run android` | Executa no emulador Android |
+| `npm run ios` | Executa no emulador iOS |
+
+---
+
+## 📄 Licença
+
+Este projeto foi desenvolvido para **fins acadêmicos**.
+
+---
+
+⭐ **Se este projeto te ajudou, considere dar uma estrela!**
