@@ -109,17 +109,19 @@ const VehicleSelectionScreen: React.FC<Props> = ({ navigation }) => {
         <View style={{ width: 24 }} />
       </View>
 
-      {/* Conteúdo com Scroll */}
       <ScrollView
         style={styles.scrollView}
         contentContainerStyle={styles.scrollContent}
         showsVerticalScrollIndicator={false}
       >
-        {/* ✅ TÍTULO PADRONIZADO */}
-        <Text style={styles.title}>Qual veículo você vai usar?</Text>
-        <Text style={styles.subtitle}>
-          Escolha o veículo que você utilizará para fazer as entregas. Você poderá alterá-lo depois se necessário.
-        </Text>
+        <View style={styles.titleContainer}>
+          {/* ✅ TÍTULO PADRONIZADO */}
+          <Text style={styles.title}>Qual veículo você vai usar?</Text>
+          <Text style={styles.subtitle}>
+            Escolha o veículo que você utilizará para fazer as entregas. Você poderá alterá-lo
+            depois se necessário.
+          </Text>
+        </View>
 
         {/* Cards de Veículos */}
         <View style={styles.vehiclesContainer}>
@@ -134,14 +136,12 @@ const VehicleSelectionScreen: React.FC<Props> = ({ navigation }) => {
               disabled={loading}
               activeOpacity={0.7}
             >
-              {/* Check icon */}
               {selectedVehicle === vehicle.type && (
                 <View style={styles.checkContainer}>
                   <Ionicons name="checkmark-circle" size={24} color={colors.primary} />
                 </View>
               )}
 
-              {/* Ícone do veículo */}
               <View
                 style={[
                   styles.vehicleIconContainer,
@@ -155,7 +155,6 @@ const VehicleSelectionScreen: React.FC<Props> = ({ navigation }) => {
                 />
               </View>
 
-              {/* Label */}
               <Text
                 style={[
                   styles.vehicleLabel,
@@ -165,7 +164,6 @@ const VehicleSelectionScreen: React.FC<Props> = ({ navigation }) => {
                 {vehicle.label}
               </Text>
 
-              {/* Documento necessário */}
               <View style={styles.documentBadge}>
                 <Ionicons
                   name={vehicle.requiresCNH ? 'card' : 'document-text'}
@@ -175,7 +173,6 @@ const VehicleSelectionScreen: React.FC<Props> = ({ navigation }) => {
                 <Text style={styles.documentText}>{vehicle.documentRequired}</Text>
               </View>
 
-              {/* Vantagens */}
               <View style={styles.advantagesContainer}>
                 {vehicle.advantages.map((advantage, index) => (
                   <View key={index} style={styles.advantageItem}>
@@ -188,7 +185,6 @@ const VehicleSelectionScreen: React.FC<Props> = ({ navigation }) => {
           ))}
         </View>
 
-        {/* Info importante */}
         {selectedVehicle && getSelectedOption()?.requiresCNH && (
           <View style={styles.infoCard}>
             <Ionicons name="information-circle" size={20} color={colors.primary} />
@@ -218,11 +214,10 @@ const VehicleSelectionScreen: React.FC<Props> = ({ navigation }) => {
           </View>
         )}
 
-        {/* Espaço extra */}
         <View style={{ height: 120 }} />
       </ScrollView>
 
-      {/* ✅ FOOTER E BOTÃO PADRONIZADOS */}
+      {/* ✅ FOOTER PADRONIZADO */}
       <View style={styles.footer}>
         <TouchableOpacity
           style={[styles.button, (!selectedVehicle || loading) && styles.buttonDisabled]}
@@ -245,7 +240,6 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: colors.backgroundLight,
   },
-  // ✅ HEADER PADRONIZADO
   header: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -267,21 +261,23 @@ const styles = StyleSheet.create({
   },
   scrollContent: {
     paddingHorizontal: 20,
+  },
+  titleContainer: {
     paddingTop: 8,
+    marginBottom: 24,
   },
   // ✅ TÍTULO PADRONIZADO
   title: {
     fontSize: 28,
     fontWeight: 'bold',
     color: colors.text,
-    marginBottom: 12,
+    marginBottom: 8,
     lineHeight: 32,
   },
   subtitle: {
     fontSize: 14,
     color: colors.textSecondary,
     lineHeight: 20,
-    marginBottom: 24,
   },
   vehiclesContainer: {
     gap: 16,
@@ -383,7 +379,6 @@ const styles = StyleSheet.create({
     fontWeight: '600',
     color: colors.text,
   },
-  // ✅ FOOTER PADRONIZADO
   footer: {
     backgroundColor: colors.backgroundLight,
     paddingHorizontal: 20,

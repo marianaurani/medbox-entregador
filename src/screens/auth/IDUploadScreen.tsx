@@ -1,4 +1,4 @@
-// src/screens/auth/CNHUploadScreen.tsx
+// src/screens/auth/IDUploadScreen.tsx
 import React, { useState } from 'react';
 import {
   View,
@@ -19,10 +19,10 @@ import * as ImagePicker from 'expo-image-picker';
 import { AuthStackParamList } from '../../types';
 import colors from '../../constants/colors';
 
-type Props = NativeStackScreenProps<AuthStackParamList, 'CNHUpload'>;
+type Props = NativeStackScreenProps<AuthStackParamList, 'IDUpload'>;
 
-const CNHUploadScreen: React.FC<Props> = ({ navigation }) => {
-  const [cnhPhoto, setCnhPhoto] = useState<string | null>(null);
+const IDUploadScreen: React.FC<Props> = ({ navigation }) => {
+  const [idPhoto, setIdPhoto] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
 
   const requestCameraPermission = async () => {
@@ -30,7 +30,7 @@ const CNHUploadScreen: React.FC<Props> = ({ navigation }) => {
     if (status !== 'granted') {
       Alert.alert(
         'Permissão necessária',
-        'Precisamos de acesso à câmera para fotografar sua CNH'
+        'Precisamos de acesso à câmera para fotografar seu documento'
       );
       return false;
     }
@@ -42,7 +42,7 @@ const CNHUploadScreen: React.FC<Props> = ({ navigation }) => {
     if (status !== 'granted') {
       Alert.alert(
         'Permissão necessária',
-        'Precisamos de acesso à galeria para escolher a foto da CNH'
+        'Precisamos de acesso à galeria para escolher a foto do documento'
       );
       return false;
     }
@@ -62,7 +62,7 @@ const CNHUploadScreen: React.FC<Props> = ({ navigation }) => {
       });
 
       if (!result.canceled) {
-        setCnhPhoto(result.assets[0].uri);
+        setIdPhoto(result.assets[0].uri);
       }
     } catch (error) {
       Alert.alert('Erro', 'Não foi possível tirar a foto');
@@ -82,7 +82,7 @@ const CNHUploadScreen: React.FC<Props> = ({ navigation }) => {
       });
 
       if (!result.canceled) {
-        setCnhPhoto(result.assets[0].uri);
+        setIdPhoto(result.assets[0].uri);
       }
     } catch (error) {
       Alert.alert('Erro', 'Não foi possível escolher a foto');
@@ -90,8 +90,8 @@ const CNHUploadScreen: React.FC<Props> = ({ navigation }) => {
   };
 
   const handleContinue = async () => {
-    if (!cnhPhoto) {
-      Alert.alert('Atenção', 'Por favor, adicione uma foto da sua CNH');
+    if (!idPhoto) {
+      Alert.alert('Atenção', 'Por favor, adicione uma foto do seu documento');
       return;
     }
 
@@ -100,7 +100,7 @@ const CNHUploadScreen: React.FC<Props> = ({ navigation }) => {
       await new Promise(resolve => setTimeout(resolve, 2000));
       navigation.navigate('RegistrationComplete');
     } catch (error: any) {
-      Alert.alert('Erro', 'Não foi possível enviar a foto da CNH');
+      Alert.alert('Erro', 'Não foi possível enviar a foto do documento');
     } finally {
       setLoading(false);
     }
@@ -110,7 +110,7 @@ const CNHUploadScreen: React.FC<Props> = ({ navigation }) => {
     <SafeAreaView style={styles.container} edges={['top', 'bottom']}>
       <StatusBar barStyle="dark-content" backgroundColor={colors.backgroundLight} />
 
-      {/* ✅ HEADER PADRONIZADO */}
+      {/* Header */}
       <View style={styles.header}>
         <TouchableOpacity
           onPress={() => navigation.goBack()}
@@ -119,7 +119,7 @@ const CNHUploadScreen: React.FC<Props> = ({ navigation }) => {
         >
           <Ionicons name="arrow-back" size={24} color={colors.text} />
         </TouchableOpacity>
-        <Text style={styles.headerTitle}>Foto da CNH</Text>
+        <Text style={styles.headerTitle}>Foto do documento</Text>
         <View style={{ width: 24 }} />
       </View>
 
@@ -128,14 +128,14 @@ const CNHUploadScreen: React.FC<Props> = ({ navigation }) => {
         contentContainerStyle={styles.scrollContent}
         showsVerticalScrollIndicator={false}
       >
-        {/* Preview da CNH */}
+        {/* Preview do documento */}
         <View style={styles.photoContainer}>
-          {cnhPhoto ? (
+          {idPhoto ? (
             <View style={styles.photoWrapper}>
-              <Image source={{ uri: cnhPhoto }} style={styles.photoPreview} />
+              <Image source={{ uri: idPhoto }} style={styles.photoPreview} />
               <TouchableOpacity
                 style={styles.removePhotoButton}
-                onPress={() => setCnhPhoto(null)}
+                onPress={() => setIdPhoto(null)}
                 disabled={loading}
               >
                 <Ionicons name="close-circle" size={32} color={colors.error || '#F44336'} />
@@ -143,17 +143,16 @@ const CNHUploadScreen: React.FC<Props> = ({ navigation }) => {
             </View>
           ) : (
             <View style={styles.placeholderContainer}>
-              <Ionicons name="card" size={60} color={colors.textSecondary} />
-              <Text style={styles.placeholderText}>CNH</Text>
+              <Ionicons name="document-text" size={60} color={colors.textSecondary} />
+              <Text style={styles.placeholderText}>RG ou CPF</Text>
             </View>
           )}
         </View>
 
-        {/* ✅ TÍTULO PADRONIZADO */}
-        <Text style={styles.title}>Adicione uma foto da sua CNH</Text>
+        <Text style={styles.title}>Adicione uma foto do seu documento</Text>
         <Text style={styles.subtitle}>
-          Fotografe sua CNH aberta. Certifique-se de que todos os dados estejam legíveis e a foto
-          esteja nítida.
+          Fotografe seu RG ou CPF com foto. Certifique-se de que todos os dados estejam legíveis
+          e a foto esteja nítida.
         </Text>
 
         {/* Botões de ação */}
@@ -166,7 +165,7 @@ const CNHUploadScreen: React.FC<Props> = ({ navigation }) => {
             <View style={styles.actionIconContainer}>
               <Ionicons name="camera" size={28} color={colors.primary} />
             </View>
-            <Text style={styles.actionButtonText}>Fotografar CNH</Text>
+            <Text style={styles.actionButtonText}>Fotografar documento</Text>
           </TouchableOpacity>
 
           <TouchableOpacity
@@ -185,15 +184,15 @@ const CNHUploadScreen: React.FC<Props> = ({ navigation }) => {
         <View style={styles.warningContainer}>
           <Ionicons name="information-circle" size={20} color={colors.primary} />
           <Text style={styles.warningText}>
-            Sua CNH precisa estar válida e dentro do prazo de validade
+            Aceitamos RG ou CPF com foto dentro do prazo de validade
           </Text>
         </View>
 
         {/* Dicas */}
         <View style={styles.tipsContainer}>
           <Text style={styles.tipsTitle}>Dicas para uma boa foto:</Text>
-          <Text style={styles.tip}>✓ CNH aberta (frente e verso visíveis)</Text>
-          <Text style={styles.tip}>✓ Todos os dados legíveis</Text>
+          <Text style={styles.tip}>✓ Documento completo e legível</Text>
+          <Text style={styles.tip}>✓ Todos os dados visíveis</Text>
           <Text style={styles.tip}>✓ Boa iluminação, sem reflexos</Text>
           <Text style={styles.tip}>✓ Foto nítida e sem cortes</Text>
         </View>
@@ -201,15 +200,15 @@ const CNHUploadScreen: React.FC<Props> = ({ navigation }) => {
         <View style={{ height: 120 }} />
       </ScrollView>
 
-      {/* ✅ FOOTER PADRONIZADO */}
+      {/* Footer */}
       <View style={styles.footer}>
         <TouchableOpacity
           style={[
             styles.button,
-            (loading || !cnhPhoto) && styles.buttonDisabled
+            (loading || !idPhoto) && styles.buttonDisabled
           ]}
           onPress={handleContinue}
-          disabled={loading || !cnhPhoto}
+          disabled={loading || !idPhoto}
         >
           {loading ? (
             <ActivityIndicator color={colors.text} />
@@ -288,7 +287,6 @@ const styles = StyleSheet.create({
     backgroundColor: colors.backgroundLight,
     borderRadius: 16,
   },
-  // ✅ TÍTULO PADRONIZADO
   title: {
     fontSize: 28,
     fontWeight: 'bold',
@@ -376,7 +374,6 @@ const styles = StyleSheet.create({
     borderTopWidth: 1,
     borderTopColor: colors.border,
   },
-  // ✅ BOTÃO PADRONIZADO
   button: {
     backgroundColor: colors.buttonSecondary,
     paddingVertical: 16,
@@ -395,4 +392,4 @@ const styles = StyleSheet.create({
   },
 });
 
-export default CNHUploadScreen;
+export default IDUploadScreen;

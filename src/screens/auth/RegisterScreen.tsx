@@ -16,11 +16,13 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { Ionicons } from '@expo/vector-icons';
 import { AuthStackParamList } from '../../types';
+import { useAuth } from '../../contexts/AuthContext';
 import colors from '../../constants/colors';
 
 type Props = NativeStackScreenProps<AuthStackParamList, 'Register'>;
 
 const RegisterScreen: React.FC<Props> = ({ navigation }) => {
+  const { signUp } = useAuth();
   const [formData, setFormData] = useState({
     name: '',
     cpf: '',
@@ -59,7 +61,8 @@ const RegisterScreen: React.FC<Props> = ({ navigation }) => {
     return emailRegex.test(email);
   };
 
-  const handleContinue = () => {
+ // src/screens/auth/RegisterScreen.tsx
+  const handleContinue = async () => {
     if (!formData.name.trim()) {
       Alert.alert('Atenção', 'Digite seu nome completo');
       return;
@@ -72,7 +75,6 @@ const RegisterScreen: React.FC<Props> = ({ navigation }) => {
       Alert.alert('Atenção', 'Digite um telefone válido');
       return;
     }
-    // ✅ VALIDAÇÃO DE EMAIL OBRIGATÓRIA
     if (!formData.email.trim()) {
       Alert.alert('Atenção', 'Digite seu e-mail');
       return;
@@ -82,11 +84,30 @@ const RegisterScreen: React.FC<Props> = ({ navigation }) => {
       return;
     }
 
+  try {
+    setLoading(true);
+    
+    // ✅ AGUARDA salvar os dados temporários
+    await signUp({
+      name: formData.name,
+      cpf: formData.cpf,
+      phone: formData.phone,
+      email: formData.email,
+      password: '', // Será preenchido depois
+    });
+
+    // ✅ SÓ NAVEGA APÓS SALVAR
     navigation.navigate('VerificationMethod', {
       email: formData.email,
       phone: formData.phone,
     });
-  };
+    
+  } catch (error: any) {
+    Alert.alert('Erro', error.message || 'Não foi possível continuar');
+  } finally {
+    setLoading(false);
+  }
+};
 
   return (
     <SafeAreaView style={styles.container} edges={['top', 'bottom']}>
@@ -313,4 +334,4 @@ const styles = StyleSheet.create({
   },
 });
 
-export default RegisterScreen
+export default RegisterScreen;

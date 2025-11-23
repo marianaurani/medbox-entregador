@@ -21,12 +21,13 @@ type Props = NativeStackScreenProps<AuthStackParamList, 'RegistrationComplete'>;
 const RegistrationCompleteScreen: React.FC<Props> = ({ navigation }) => {
   const { completeSignUp } = useAuth();
 
-  // ✅ CORRIGIDO - Função simplificada sem try/catch desnecessário
+  // ✅ CORRIGIDO - Agora vai para o app após completar
   const handleEnterApp = async () => {
     if (completeSignUp) {
       await completeSignUp();
     }
-    // Se completeSignUp não existir, o AuthContext já está gerenciando o estado
+    // O AuthContext já muda isAuthenticated para true, 
+    // o que faz o RootNavigator mudar automaticamente para MainNavigator
   };
 
   return (

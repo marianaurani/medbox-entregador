@@ -21,6 +21,7 @@ export type AuthStackParamList = {
   VehicleSelection: undefined;
   PhotoUpload: { vehicleType: VehicleType };
   CNHUpload: { vehicleType: VehicleType };
+  IDUpload: { vehicleType: VehicleType }; // ✅ NOVA ROTA
   RegistrationComplete: undefined;
 };
 
@@ -109,6 +110,7 @@ export interface AuthContextData {
   updateStatus: (status: UserStatus) => Promise<void>;
   updateProfile?: (data: Partial<User>) => Promise<void>;
   completeSignUp?: () => Promise<void>;
+  getTempSignupData?: () => Promise<SignUpData | null>; // ✅ ADICIONADO
   saveTempVehicleType?: (vehicleType: VehicleType) => Promise<void>;
   getTempVehicleType?: () => Promise<VehicleType | null>;
 }

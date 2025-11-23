@@ -10,6 +10,7 @@ import {
   ActivityIndicator,
   StatusBar,
   Platform,
+  ScrollView,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
@@ -27,14 +28,16 @@ const SecurityCodeScreen: React.FC<Props> = ({ navigation, route }) => {
   const inputRefs = useRef<(TextInput | null)[]>([]);
 
   useEffect(() => {
-    if (resendTimer > 0) {
-      const timer = setTimeout(() => setResendTimer(resendTimer - 1), 1000);
-      return () => clearTimeout(timer);
-    }
-  }, [resendTimer]);
+    const timer = setInterval(() => {
+      setResendTimer((prev) => (prev > 0 ? prev - 1 : 0));
+    }, 1000);
+    return () => clearInterval(timer);
+  }, []);
 
   const handleCodeChange = (text: string, index: number) => {
-    if (!/^\d*$/.test(text)) return;
+    if (text.length > 1) {
+      text = text[text.length - 1];
+    }
 
     const newCode = [...code];
     newCode[index] = text;
@@ -42,10 +45,6 @@ const SecurityCodeScreen: React.FC<Props> = ({ navigation, route }) => {
 
     if (text && index < 5) {
       inputRefs.current[index + 1]?.focus();
-    }
-
-    if (newCode.every(digit => digit !== '') && index === 5) {
-      handleVerifyCode(newCode.join(''));
     }
   };
 
@@ -55,34 +54,29 @@ const SecurityCodeScreen: React.FC<Props> = ({ navigation, route }) => {
     }
   };
 
-  const handleVerifyCode = async (fullCode: string) => {
+  const handleVerify = async () => {
+    const fullCode = code.join('');
+    if (fullCode.length !== 6) {
+      Alert.alert('Atenção', 'Digite o código completo');
+      return;
+    }
+
     try {
       setLoading(true);
       await new Promise(resolve => setTimeout(resolve, 1500));
-      
       navigation.navigate('CreatePassword');
     } catch (error: any) {
-      Alert.alert('Erro', 'Código inválido. Tente novamente.');
-      setCode(['', '', '', '', '', '']);
-      inputRefs.current[0]?.focus();
+      Alert.alert('Erro', 'Código inválido');
     } finally {
       setLoading(false);
     }
   };
 
-  const handleResendCode = async () => {
+  const handleResend = async () => {
     if (resendTimer > 0) return;
-
-    try {
-      setLoading(true);
-      await new Promise(resolve => setTimeout(resolve, 1000));
-      setResendTimer(60);
-      Alert.alert('Código reenviado', `Um novo código foi enviado para ${contact}`);
-    } catch (error: any) {
-      Alert.alert('Erro', 'Não foi possível reenviar o código');
-    } finally {
-      setLoading(false);
-    }
+    
+    setResendTimer(60);
+    Alert.alert('Código reenviado', 'Um novo código foi enviado');
   };
 
   return (
@@ -98,32 +92,32 @@ const SecurityCodeScreen: React.FC<Props> = ({ navigation, route }) => {
         >
           <Ionicons name="arrow-back" size={24} color={colors.text} />
         </TouchableOpacity>
-        <Text style={styles.headerTitle}>Verificação</Text>
+        <Text style={styles.headerTitle}>Código de segurança</Text>
         <View style={{ width: 24 }} />
       </View>
 
-      {/* Conteúdo */}
-      <View style={styles.content}>
-        {/* Ícone */}
+      <ScrollView 
+        style={styles.scrollView}
+        contentContainerStyle={styles.scrollContent}
+        showsVerticalScrollIndicator={false}
+      >
         <View style={styles.iconContainer}>
           <View style={styles.iconCircle}>
             <Ionicons 
-              name={method === 'email' ? 'mail-outline' : 'chatbox-outline'} 
-              size={40} 
+              name={method === 'email' ? 'mail' : 'chatbox'} 
+              size={48} 
               color={colors.primary} 
             />
           </View>
         </View>
 
         {/* ✅ TÍTULO PADRONIZADO */}
-        <Text style={styles.title}>Digite o código de segurança</Text>
-
+        <Text style={styles.title}>Digite o código de verificação</Text>
         <Text style={styles.subtitle}>
-          Enviamos um código de 6 dígitos para {'\n'}
+          Enviamos um código de 6 dígitos para{'\n'}
           <Text style={styles.contact}>{contact}</Text>
         </Text>
 
-        {/* Campos de código */}
         <View style={styles.codeContainer}>
           {code.map((digit, index) => (
             <TextInput
@@ -131,10 +125,7 @@ const SecurityCodeScreen: React.FC<Props> = ({ navigation, route }) => {
               ref={(ref) => {
                 inputRefs.current[index] = ref;
               }}
-              style={[
-                styles.codeInput,
-                digit && styles.codeInputFilled,
-              ]}
+              style={[styles.codeInput, digit && styles.codeInputFilled]}
               value={digit}
               onChangeText={(text) => handleCodeChange(text, index)}
               onKeyPress={(e) => handleKeyPress(e, index)}
@@ -146,41 +137,34 @@ const SecurityCodeScreen: React.FC<Props> = ({ navigation, route }) => {
           ))}
         </View>
 
-        {/* Reenviar código */}
         <TouchableOpacity
-          onPress={handleResendCode}
-          disabled={resendTimer > 0 || loading}
           style={styles.resendButton}
+          onPress={handleResend}
+          disabled={resendTimer > 0 || loading}
         >
-          <Text style={[
-            styles.resendText,
-            (resendTimer > 0 || loading) && styles.resendTextDisabled
-          ]}>
+          <Text style={[styles.resendText, resendTimer > 0 && styles.resendTextDisabled]}>
             {resendTimer > 0
               ? `Reenviar código em ${resendTimer}s`
-              : 'Reenviar código'
-            }
+              : 'Reenviar código'}
           </Text>
         </TouchableOpacity>
 
-        {/* Mudar método */}
+        <View style={{ height: 200 }} />
+      </ScrollView>
+
+      {/* ✅ FOOTER PADRONIZADO */}
+      <View style={styles.footer}>
         <TouchableOpacity
-          onPress={() => navigation.goBack()}
+          style={[styles.button, loading && styles.buttonDisabled]}
+          onPress={handleVerify}
           disabled={loading}
-          style={styles.changeMethodButton}
         >
-          <Ionicons name="swap-horizontal" size={16} color={colors.primary} />
-          <Text style={styles.changeMethodText}>
-            Usar outro método de verificação
-          </Text>
+          {loading ? (
+            <ActivityIndicator color={colors.text} />
+          ) : (
+            <Text style={styles.buttonText}>Verificar código</Text>
+          )}
         </TouchableOpacity>
-
-        {loading && (
-          <View style={styles.loadingContainer}>
-            <ActivityIndicator size="large" color={colors.primary} />
-            <Text style={styles.loadingText}>Verificando código...</Text>
-          </View>
-        )}
       </View>
     </SafeAreaView>
   );
@@ -191,7 +175,6 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: colors.backgroundLight,
   },
-  // ✅ HEADER PADRONIZADO
   header: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -208,19 +191,21 @@ const styles = StyleSheet.create({
     fontWeight: '600',
     color: colors.text,
   },
-  content: {
+  scrollView: {
     flex: 1,
+  },
+  scrollContent: {
     paddingHorizontal: 20,
-    paddingTop: 8,
   },
   iconContainer: {
     alignItems: 'center',
+    marginTop: 20,
     marginBottom: 24,
   },
   iconCircle: {
-    width: 80,
-    height: 80,
-    borderRadius: 40,
+    width: 96,
+    height: 96,
+    borderRadius: 48,
     backgroundColor: colors.primary + '15',
     justifyContent: 'center',
     alignItems: 'center',
@@ -238,8 +223,8 @@ const styles = StyleSheet.create({
     fontSize: 14,
     color: colors.textSecondary,
     textAlign: 'center',
+    marginBottom: 40,
     lineHeight: 20,
-    marginBottom: 32,
   },
   contact: {
     color: colors.primary,
@@ -247,30 +232,29 @@ const styles = StyleSheet.create({
   },
   codeContainer: {
     flexDirection: 'row',
-    justifyContent: 'center',
-    gap: 8,
+    justifyContent: 'space-between',
     marginBottom: 24,
+    gap: 8,
   },
   codeInput: {
-    width: 48,
+    flex: 1,
     height: 56,
-    borderWidth: 1,
+    borderWidth: 2,
     borderColor: colors.border,
     borderRadius: 8,
-    fontSize: 24,
-    fontWeight: '600',
     textAlign: 'center',
+    fontSize: 24,
+    fontWeight: 'bold',
     color: colors.text,
     backgroundColor: colors.backgroundLight,
   },
   codeInputFilled: {
     borderColor: colors.primary,
-    borderWidth: 2,
+    backgroundColor: colors.primary + '08',
   },
   resendButton: {
     alignItems: 'center',
     paddingVertical: 12,
-    marginBottom: 16,
   },
   resendText: {
     fontSize: 14,
@@ -280,26 +264,30 @@ const styles = StyleSheet.create({
   resendTextDisabled: {
     color: colors.textSecondary,
   },
-  changeMethodButton: {
-    flexDirection: 'row',
+  footer: {
+    backgroundColor: colors.backgroundLight,
+    paddingHorizontal: 20,
+    paddingTop: 16,
+    paddingBottom: Platform.OS === 'ios' ? 0 : 16,
+    borderTopWidth: 1,
+    borderTopColor: colors.border,
+  },
+  // ✅ BOTÃO PADRONIZADO
+  button: {
+    backgroundColor: colors.buttonSecondary,
+    paddingVertical: 16,
+    borderRadius: 8,
     alignItems: 'center',
+    height: 52,
     justifyContent: 'center',
-    gap: 6,
-    paddingVertical: 12,
   },
-  changeMethodText: {
-    fontSize: 14,
-    color: colors.primary,
-    fontWeight: '500',
+  buttonDisabled: {
+    opacity: 0.6,
   },
-  loadingContainer: {
-    alignItems: 'center',
-    marginTop: 32,
-  },
-  loadingText: {
-    marginTop: 12,
-    fontSize: 14,
-    color: colors.textSecondary,
+  buttonText: {
+    fontSize: 16,
+    fontWeight: '600',
+    color: colors.text,
   },
 });
 

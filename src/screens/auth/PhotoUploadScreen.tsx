@@ -102,10 +102,12 @@ const PhotoUploadScreen: React.FC<Props> = ({ navigation, route }) => {
       setLoading(true);
       await new Promise(resolve => setTimeout(resolve, 1500));
       
+      // ✅ CORRIGIDO - Bike vai para IDUpload, Moto/Carro vai para CNHUpload
       if (requiresCNH) {
         navigation.navigate('CNHUpload', { vehicleType });
       } else {
-        navigation.navigate('RegistrationComplete');
+        // ✅ Bike agora vai para upload de identidade
+        navigation.navigate('IDUpload', { vehicleType });
       }
     } catch (error: any) {
       Alert.alert('Erro', 'Não foi possível enviar a foto');
@@ -131,7 +133,6 @@ const PhotoUploadScreen: React.FC<Props> = ({ navigation, route }) => {
         <View style={{ width: 24 }} />
       </View>
 
-      {/* Conteúdo com Scroll */}
       <ScrollView
         style={styles.scrollView}
         contentContainerStyle={styles.scrollContent}
@@ -160,7 +161,8 @@ const PhotoUploadScreen: React.FC<Props> = ({ navigation, route }) => {
         {/* ✅ TÍTULO PADRONIZADO */}
         <Text style={styles.title}>Adicione uma foto do seu rosto</Text>
         <Text style={styles.subtitle}>
-          Tire uma selfie ou escolha uma foto recente da galeria. Certifique-se de que seu rosto esteja bem visível e iluminado.
+          Tire uma selfie ou escolha uma foto recente da galeria. Certifique-se de que seu rosto
+          esteja bem visível e iluminado.
         </Text>
 
         {/* Botões de ação */}
@@ -197,11 +199,10 @@ const PhotoUploadScreen: React.FC<Props> = ({ navigation, route }) => {
           <Text style={styles.tip}>✓ Não use filtros</Text>
         </View>
 
-        {/* Espaço extra */}
         <View style={{ height: 120 }} />
       </ScrollView>
 
-      {/* ✅ FOOTER E BOTÃO PADRONIZADOS */}
+      {/* ✅ FOOTER PADRONIZADO */}
       <View style={styles.footer}>
         <TouchableOpacity
           style={[
@@ -227,7 +228,6 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: colors.backgroundLight,
   },
-  // ✅ HEADER PADRONIZADO
   header: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -249,7 +249,6 @@ const styles = StyleSheet.create({
   },
   scrollContent: {
     paddingHorizontal: 20,
-    paddingTop: 8,
   },
   photoContainer: {
     alignItems: 'center',
@@ -290,7 +289,7 @@ const styles = StyleSheet.create({
     fontWeight: 'bold',
     color: colors.text,
     textAlign: 'center',
-    marginBottom: 12,
+    marginBottom: 8,
     lineHeight: 32,
   },
   subtitle: {
@@ -347,7 +346,6 @@ const styles = StyleSheet.create({
     marginBottom: 4,
     lineHeight: 18,
   },
-  // ✅ FOOTER PADRONIZADO
   footer: {
     backgroundColor: colors.backgroundLight,
     paddingHorizontal: 20,

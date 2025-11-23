@@ -94,32 +94,36 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     }
   };
 
-  // Agora signUp só salva temporariamente
-  const signUp = async (data: SignUpData) => {
-    try {
-      setIsLoading(true);
-      await new Promise(resolve => setTimeout(resolve, 500));
-      
-      if (!data.name?.trim()) throw new Error('Nome é obrigatório');
-      if (!data.cpf?.trim()) throw new Error('CPF é obrigatório');
-      if (!data.phone?.trim()) throw new Error('Telefone é obrigatório');
-      if (!data.email?.trim()) throw new Error('E-mail é obrigatório');
+ // src/contexts/AuthContext.tsx - Trecho da função signUp
 
-      // Salva temporariamente (NÃO cria usuário ainda)
-      await saveTempSignupData(data);
-      
-    } catch (error) {
-      throw error;
-    } finally {
-      setIsLoading(false);
-    }
-  };
+// ✅ CORRIGIDO - signUp agora apenas salva dados temporários
+const signUp = async (data: SignUpData) => {
+  try {
+    // ✅ REMOVE setIsLoading aqui, causa conflito
+    // Validações básicas apenas
+    if (!data.name?.trim()) throw new Error('Nome é obrigatório');
+    if (!data.cpf?.trim()) throw new Error('CPF é obrigatório');
+    if (!data.phone?.trim()) throw new Error('Telefone é obrigatório');
+    if (!data.email?.trim()) throw new Error('E-mail é obrigatório');
+
+    // ✅ Salva temporariamente (NÃO cria usuário ainda)
+    await saveTempSignupData(data);
+    
+  } catch (error) {
+    throw error;
+  }
+};
 
   // Completa o cadastro (chamado no RegistrationComplete)
   const completeSignUp = async () => {
     try {
       const tempData = await getTempSignupData();
-      if (!tempData) throw new Error('Dados de cadastro não encontrados');
+      if (!tempData) {
+        // Se não tem dados temporários, apenas marca como autenticado
+        // (caso o usuário já tenha completado o cadastro antes)
+        console.log('Usuário já autenticado');
+        return;
+      }
 
       const newUser: User = {
         id: Date.now().toString(),
@@ -140,6 +144,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       await clearTempSignupData();
       
     } catch (error) {
+      console.error('Erro ao completar cadastro:', error);
       throw error;
     }
   };
@@ -248,6 +253,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         updateStatus,
         updateProfile,
         completeSignUp,
+        getTempSignupData, // ✅ EXPÕE A FUNÇÃO
       }}
     >
       {children}

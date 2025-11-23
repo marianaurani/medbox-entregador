@@ -18,11 +18,13 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { Ionicons } from '@expo/vector-icons';
 import { AuthStackParamList } from '../../types';
+import { useAuth } from '../../contexts/AuthContext';
 import colors from '../../constants/colors';
 
 type Props = NativeStackScreenProps<AuthStackParamList, 'CreatePassword'>;
 
 const CreatePasswordScreen: React.FC<Props> = ({ navigation }) => {
+  const { getTempSignupData, signUp } = useAuth();
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
@@ -49,6 +51,18 @@ const CreatePasswordScreen: React.FC<Props> = ({ navigation }) => {
     try {
       setLoading(true);
       Keyboard.dismiss();
+      
+      // ✅ ATUALIZA OS DADOS TEMPORÁRIOS COM A SENHA
+      if (getTempSignupData) {
+        const tempData = await getTempSignupData();
+        if (tempData) {
+          await signUp({
+            ...tempData,
+            password: password, // Adiciona a senha
+          });
+        }
+      }
+      
       await new Promise(resolve => setTimeout(resolve, 1000));
       
       navigation.navigate('VehicleSelection');
@@ -230,7 +244,6 @@ const styles = StyleSheet.create({
   keyboardView: {
     flex: 1,
   },
-  // ✅ HEADER PADRONIZADO
   header: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -334,7 +347,6 @@ const styles = StyleSheet.create({
     marginBottom: 4,
     lineHeight: 18,
   },
-  // ✅ FOOTER PADRONIZADO
   footer: {
     backgroundColor: colors.backgroundLight,
     paddingHorizontal: 20,
