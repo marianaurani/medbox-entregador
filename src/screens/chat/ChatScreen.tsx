@@ -10,6 +10,7 @@ import {
   KeyboardAvoidingView,
   Platform,
   ActivityIndicator,
+  Alert,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
@@ -27,40 +28,26 @@ const ChatScreen: React.FC = () => {
   const navigation = useNavigation();
   const route = useRoute();
   const { chatType, chatName, deliveryId } = route.params as RouteParams;
-  const { getMessagesByChat, sendMessage, markAsRead } = useChat();
+  const { messages: allMessages, sendMessage, markAsRead, clearChat, clearOldMessages } = useChat();
   
-  const [messages, setMessages] = useState<Message[]>([]);
   const [inputText, setInputText] = useState('');
   const [isSending, setIsSending] = useState(false);
   const flatListRef = useRef<FlatList>(null);
-  const intervalRef = useRef<NodeJS.Timeout | null>(null);
 
-  // ✅ CORRIGIDO - Carrega mensagens ao entrar na tela
+  // ✅ SOLUÇÃO: Usa diretamente as mensagens do contexto com filtro
+  const messages = allMessages
+    .filter(m => m.chatType === chatType && m.deliveryId === deliveryId)
+    .sort((a, b) => a.timestamp.getTime() - b.timestamp.getTime());
+
+  // Marca como lido ao entrar
   useFocusEffect(
     React.useCallback(() => {
-      loadMessages();
       markAsRead(chatType, deliveryId);
-      
-      // Atualiza mensagens a cada 500ms enquanto está na tela
-      intervalRef.current = setInterval(() => {
-        loadMessages();
-      }, 500);
-
-      // Limpa o intervalo ao sair da tela
-      return () => {
-        if (intervalRef.current) {
-          clearInterval(intervalRef.current);
-        }
-      };
+      clearOldMessages(30);
     }, [chatType, deliveryId])
   );
 
-  const loadMessages = () => {
-    const chatMessages = getMessagesByChat(chatType, deliveryId);
-    setMessages(chatMessages);
-  };
-
-  // ✅ CORRIGIDO - Rola para o final quando mensagens mudam
+  // Rola para o final quando mensagens mudam
   useEffect(() => {
     if (messages.length > 0) {
       setTimeout(() => {
@@ -78,15 +65,31 @@ const ChatScreen: React.FC = () => {
 
     try {
       await sendMessage(text, chatType, deliveryId);
-      // ✅ Atualiza imediatamente após enviar
-      setTimeout(() => {
-        loadMessages();
-      }, 100);
     } catch (error) {
       console.error('Erro ao enviar mensagem:', error);
     } finally {
       setIsSending(false);
     }
+  };
+
+  const handleClearChat = () => {
+    Alert.alert(
+      'Limpar Conversa',
+      'Tem certeza que deseja apagar todas as mensagens desta conversa?',
+      [
+        {
+          text: 'Cancelar',
+          style: 'cancel',
+        },
+        {
+          text: 'Limpar',
+          style: 'destructive',
+          onPress: async () => {
+            await clearChat(chatType, deliveryId);
+          },
+        },
+      ]
+    );
   };
 
   const formatTime = (date: Date) => {
@@ -161,7 +164,17 @@ const ChatScreen: React.FC = () => {
             <Text style={styles.headerStatus}>Online</Text>
           </View>
         </View>
-        <View style={{ width: 24 }} />
+        <TouchableOpacity 
+          onPress={handleClearChat} 
+          style={styles.clearButton}
+          disabled={messages.length === 0}
+        >
+          <Ionicons 
+            name="trash-outline" 
+            size={22} 
+            color={messages.length === 0 ? colors.textLight : colors.error} 
+          />
+        </TouchableOpacity>
       </View>
 
       {/* Messages List */}
@@ -264,6 +277,10 @@ const styles = StyleSheet.create({
     fontSize: 12,
     color: colors.success,
     marginTop: 2,
+  },
+  clearButton: {
+    padding: 8,
+    marginLeft: 8,
   },
   messagesList: {
     padding: 16,
