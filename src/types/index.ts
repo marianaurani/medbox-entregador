@@ -5,7 +5,7 @@ import { NavigatorScreenParams } from '@react-navigation/native';
 // ==================== VEHICLE TYPE ====================
 export type VehicleType = 'moto' | 'carro' | 'bike';
 
-// ==================== CHAT TYPES ==================== ✅ NOVO
+// ==================== CHAT TYPES ====================
 export type ChatType = 'support' | 'customer' | 'pharmacy';
 export type MessageStatus = 'sending' | 'sent' | 'delivered' | 'read';
 
@@ -24,7 +24,6 @@ export type AuthStackParamList = {
   RegistrationComplete: undefined;
 };
 
-// ✅ CORRIGIDO - MainTabParamList agora aceita navegação aninhada
 export type MainTabParamList = {
   Home: undefined;
   Delivery: NavigatorScreenParams<DeliveryStackParamList>;
@@ -39,10 +38,9 @@ export type DeliveryStackParamList = {
   Chat: { chatType: ChatType; chatName: string; deliveryId?: string };
 };
 
-// ✅ CORRIGIDO - Adicionada rota Profile
 export type MenuStackParamList = {
   MenuHome: undefined;
-  Profile: undefined; // ✅ ADICIONADO
+  Profile: undefined;
   BankData: undefined;
   BankAccount: undefined;
   AddPixKey: { pixKeyId?: string } | undefined;
@@ -90,6 +88,7 @@ export interface User {
 }
 
 // ==================== AUTH TYPES ====================
+// ✅ ATUALIZADO - email e password agora são obrigatórios
 export interface SignUpData {
   name: string;
   cpf: string;
@@ -99,11 +98,12 @@ export interface SignUpData {
   vehicleType?: VehicleType;
 }
 
+// ✅ ATUALIZADO - signIn agora recebe email e password
 export interface AuthContextData {
   user: User | null;
   isLoading: boolean;
   isAuthenticated: boolean;
-  signIn: (cpf: string) => Promise<void>;
+  signIn: (email: string, password: string) => Promise<void>;
   signUp: (data: SignUpData) => Promise<void>;
   signOut: () => Promise<void>;
   updateStatus: (status: UserStatus) => Promise<void>;
@@ -235,7 +235,7 @@ export interface DeliveryContextData {
   getAvailableDeliveries: () => Delivery[];
 }
 
-// ==================== CHAT TYPES ==================== ✅ NOVO
+// ==================== CHAT TYPES ====================
 export interface Message {
   id: string;
   text: string;
@@ -263,5 +263,7 @@ export interface ChatContextData {
   getMessagesByChat: (chatType: ChatType, deliveryId?: string) => Message[];
   markAsRead: (chatType: ChatType, deliveryId?: string) => Promise<void>;
   getChatById: (chatType: ChatType, deliveryId?: string) => Chat | undefined;
+  clearChat: (chatType: ChatType, deliveryId?: string) => Promise<void>;
+  clearOldMessages: (daysToKeep?: number) => Promise<void>;
   isLoading: boolean;
 }

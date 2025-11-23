@@ -54,6 +54,11 @@ const RegisterScreen: React.FC<Props> = ({ navigation }) => {
     return text;
   };
 
+  const validateEmail = (email: string) => {
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    return emailRegex.test(email);
+  };
+
   const handleContinue = () => {
     if (!formData.name.trim()) {
       Alert.alert('Atenção', 'Digite seu nome completo');
@@ -67,9 +72,18 @@ const RegisterScreen: React.FC<Props> = ({ navigation }) => {
       Alert.alert('Atenção', 'Digite um telefone válido');
       return;
     }
+    // ✅ VALIDAÇÃO DE EMAIL OBRIGATÓRIA
+    if (!formData.email.trim()) {
+      Alert.alert('Atenção', 'Digite seu e-mail');
+      return;
+    }
+    if (!validateEmail(formData.email)) {
+      Alert.alert('Atenção', 'Digite um e-mail válido');
+      return;
+    }
 
     navigation.navigate('VerificationMethod', {
-      email: formData.email || 'seu e-mail',
+      email: formData.email,
       phone: formData.phone,
     });
   };
@@ -97,6 +111,7 @@ const RegisterScreen: React.FC<Props> = ({ navigation }) => {
         keyboardShouldPersistTaps="handled"
         showsVerticalScrollIndicator={false}
       >
+        {/* ✅ TÍTULO PADRONIZADO - altura 32px */}
         <View style={styles.titleContainer}>
           <Text style={styles.title}>Crie sua conta</Text>
           <Text style={styles.subtitle}>
@@ -143,8 +158,9 @@ const RegisterScreen: React.FC<Props> = ({ navigation }) => {
             />
           </View>
 
+          {/* ✅ EMAIL AGORA É OBRIGATÓRIO */}
           <View style={styles.inputGroup}>
-            <Text style={styles.label}>E-mail (opcional)</Text>
+            <Text style={styles.label}>E-mail</Text>
             <TextInput
               style={styles.input}
               placeholder="seuemail@exemplo.com"
@@ -169,7 +185,7 @@ const RegisterScreen: React.FC<Props> = ({ navigation }) => {
         <View style={{ height: 120 }} />
       </ScrollView>
 
-      {/* Footer Padronizado */}
+      {/* ✅ BOTÃO PADRONIZADO - altura 52px */}
       <View style={styles.footer}>
         <TouchableOpacity 
           style={[styles.button, loading && styles.buttonDisabled]}
@@ -197,7 +213,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'space-between',
     paddingHorizontal: 20,
-    paddingVertical: 20,
+    paddingVertical: 16,
     backgroundColor: colors.backgroundLight,
   },
   backButton: {
@@ -215,13 +231,16 @@ const styles = StyleSheet.create({
     paddingHorizontal: 20,
   },
   titleContainer: {
-    paddingBottom: 30,
+    paddingTop: 8,
+    paddingBottom: 24,
   },
+  // ✅ TÍTULO PADRONIZADO
   title: {
     fontSize: 28,
     fontWeight: 'bold',
     color: colors.text,
     marginBottom: 8,
+    lineHeight: 32, // Altura padronizada
   },
   subtitle: {
     fontSize: 14,
@@ -270,16 +289,19 @@ const styles = StyleSheet.create({
   footer: {
     backgroundColor: colors.backgroundLight,
     paddingHorizontal: 20,
-    paddingTop: 15,
-    paddingBottom: Platform.OS === 'ios' ? 0 : 15,
+    paddingTop: 16,
+    paddingBottom: Platform.OS === 'ios' ? 0 : 16,
     borderTopWidth: 1,
     borderTopColor: colors.border,
   },
+  // ✅ BOTÃO PADRONIZADO
   button: {
     backgroundColor: colors.buttonSecondary,
     paddingVertical: 16,
     borderRadius: 8,
     alignItems: 'center',
+    height: 52, // Altura padronizada
+    justifyContent: 'center',
   },
   buttonDisabled: {
     opacity: 0.6,
@@ -291,4 +313,4 @@ const styles = StyleSheet.create({
   },
 });
 
-export default RegisterScreen;
+export default RegisterScreen

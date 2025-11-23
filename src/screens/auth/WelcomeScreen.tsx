@@ -35,6 +35,7 @@ const WelcomeScreen: React.FC<Props> = ({ navigation }) => {
       <SafeAreaView style={styles.safeArea} edges={['bottom']}>
         <View style={styles.overlayContainer}>
           <View style={styles.content}>
+            {/* ✅ TÍTULO PADRONIZADO */}
             <Text style={styles.title}>
               Boas-vindas ao MedBox para entregadores
             </Text>
@@ -46,7 +47,7 @@ const WelcomeScreen: React.FC<Props> = ({ navigation }) => {
             </Text>
           </View>
 
-          {/* Botões Padronizados */}
+          {/* ✅ BOTÕES PADRONIZADOS */}
           <View style={styles.footer}>
             <TouchableOpacity 
               style={styles.buttonPrimary}
@@ -88,28 +89,22 @@ const styles = StyleSheet.create({
     backgroundColor: colors.backgroundLight,
     borderTopLeftRadius: 24,
     borderTopRightRadius: 24,
-    shadowColor: '#000',
-    shadowOffset: {
-      width: 0,
-      height: -2,
-    },
-    shadowOpacity: 0.1,
-    shadowRadius: 8,
-    elevation: 5,
+    // ✅ REMOVIDO shadowColor que causava o sombreamento
+    paddingTop: 24, // ✅ Padding interno ao invés de margin
     justifyContent: 'space-between',
   },
   content: {
-    flex: 1,
     paddingHorizontal: 20,
-    paddingTop: 30,
-    justifyContent: 'center',
+    paddingTop: 16, // ✅ AJUSTADO - Menos espaço superior
+    paddingBottom: 20, // ✅ Espaço inferior para não grudar nos botões
   },
+  // ✅ TÍTULO PADRONIZADO
   title: {
-    fontSize: 26,
+    fontSize: 28,
     fontWeight: 'bold',
     color: colors.text,
     marginBottom: 16,
-    lineHeight: 34,
+    lineHeight: 32, // Altura padronizada
   },
   subtitle: {
     fontSize: 16,
@@ -118,14 +113,18 @@ const styles = StyleSheet.create({
   },
   footer: {
     paddingHorizontal: 20,
-    paddingBottom: Platform.OS === 'ios' ? 0 : 20,
+    paddingTop: 20, // ✅ AUMENTADO - Mais espaço entre conteúdo e botões
+    paddingBottom: Platform.OS === 'ios' ? 20 : 20, // ✅ Padding consistente
     gap: 12,
   },
+  // ✅ BOTÕES PADRONIZADOS
   buttonPrimary: {
     backgroundColor: colors.buttonSecondary,
     paddingVertical: 16,
     borderRadius: 8,
     alignItems: 'center',
+    height: 52, // Altura padronizada
+    justifyContent: 'center',
   },
   buttonPrimaryText: {
     fontSize: 16,
@@ -139,6 +138,8 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     borderWidth: 1,
     borderColor: colors.border,
+    height: 52, // Altura padronizada
+    justifyContent: 'center',
   },
   buttonSecondaryText: {
     fontSize: 16,

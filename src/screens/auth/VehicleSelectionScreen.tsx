@@ -8,6 +8,7 @@ import {
   ActivityIndicator,
   StatusBar,
   ScrollView,
+  Platform,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
@@ -77,10 +78,8 @@ const VehicleSelectionScreen: React.FC<Props> = ({ navigation }) => {
 
     try {
       setLoading(true);
-      // Aqui você pode salvar no contexto ou AsyncStorage
       await new Promise(resolve => setTimeout(resolve, 500));
       
-      // Navega para PhotoUpload
       navigation.navigate('PhotoUpload', { vehicleType: selectedVehicle });
     } catch (error) {
       console.error('Erro ao continuar:', error);
@@ -94,10 +93,10 @@ const VehicleSelectionScreen: React.FC<Props> = ({ navigation }) => {
   };
 
   return (
-    <SafeAreaView style={styles.container} edges={['top']}>
+    <SafeAreaView style={styles.container} edges={['top', 'bottom']}>
       <StatusBar barStyle="dark-content" backgroundColor={colors.backgroundLight} />
 
-      {/* Header */}
+      {/* ✅ HEADER PADRONIZADO */}
       <View style={styles.header}>
         <TouchableOpacity
           onPress={() => navigation.goBack()}
@@ -116,13 +115,11 @@ const VehicleSelectionScreen: React.FC<Props> = ({ navigation }) => {
         contentContainerStyle={styles.scrollContent}
         showsVerticalScrollIndicator={false}
       >
-        <View style={styles.titleContainer}>
-          <Text style={styles.title}>Qual veículo você vai usar?</Text>
-          <Text style={styles.subtitle}>
-            Escolha o veículo que você utilizará para fazer as entregas. Você poderá alterá-lo
-            depois se necessário.
-          </Text>
-        </View>
+        {/* ✅ TÍTULO PADRONIZADO */}
+        <Text style={styles.title}>Qual veículo você vai usar?</Text>
+        <Text style={styles.subtitle}>
+          Escolha o veículo que você utilizará para fazer as entregas. Você poderá alterá-lo depois se necessário.
+        </Text>
 
         {/* Cards de Veículos */}
         <View style={styles.vehiclesContainer}>
@@ -225,7 +222,7 @@ const VehicleSelectionScreen: React.FC<Props> = ({ navigation }) => {
         <View style={{ height: 120 }} />
       </ScrollView>
 
-      {/* Botão Fixo */}
+      {/* ✅ FOOTER E BOTÃO PADRONIZADOS */}
       <View style={styles.footer}>
         <TouchableOpacity
           style={[styles.button, (!selectedVehicle || loading) && styles.buttonDisabled]}
@@ -235,10 +232,7 @@ const VehicleSelectionScreen: React.FC<Props> = ({ navigation }) => {
           {loading ? (
             <ActivityIndicator color={colors.text} />
           ) : (
-            <>
-              <Text style={styles.buttonText}>Continuar</Text>
-              {/* <Ionicons name="arrow-forward" size={20} color={colors.text} /> */}
-            </>
+            <Text style={styles.buttonText}>Continuar</Text>
           )}
         </TouchableOpacity>
       </View>
@@ -251,12 +245,13 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: colors.backgroundLight,
   },
+  // ✅ HEADER PADRONIZADO
   header: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
     paddingHorizontal: 20,
-    paddingBottom: 20,
+    paddingVertical: 16,
     backgroundColor: colors.backgroundLight,
   },
   backButton: {
@@ -272,20 +267,21 @@ const styles = StyleSheet.create({
   },
   scrollContent: {
     paddingHorizontal: 20,
+    paddingTop: 8,
   },
-  titleContainer: {
-    marginBottom: 24,
-  },
+  // ✅ TÍTULO PADRONIZADO
   title: {
-    fontSize: 24,
+    fontSize: 28,
     fontWeight: 'bold',
     color: colors.text,
-    marginBottom: 8,
+    marginBottom: 12,
+    lineHeight: 32,
   },
   subtitle: {
     fontSize: 14,
     color: colors.textSecondary,
     lineHeight: 20,
+    marginBottom: 24,
   },
   vehiclesContainer: {
     gap: 16,
@@ -387,22 +383,23 @@ const styles = StyleSheet.create({
     fontWeight: '600',
     color: colors.text,
   },
+  // ✅ FOOTER PADRONIZADO
   footer: {
     backgroundColor: colors.backgroundLight,
     paddingHorizontal: 20,
-    paddingTop: 15,
-    paddingBottom: 35,
+    paddingTop: 16,
+    paddingBottom: Platform.OS === 'ios' ? 0 : 16,
     borderTopWidth: 1,
     borderTopColor: colors.border,
   },
+  // ✅ BOTÃO PADRONIZADO
   button: {
     backgroundColor: colors.buttonSecondary,
     paddingVertical: 16,
     borderRadius: 8,
     alignItems: 'center',
-    flexDirection: 'row',
+    height: 52,
     justifyContent: 'center',
-    gap: 8,
   },
   buttonDisabled: {
     opacity: 0.6,

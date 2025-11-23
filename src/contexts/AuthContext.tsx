@@ -7,6 +7,7 @@ const AuthContext = createContext<AuthContextData>({} as AuthContextData);
 
 const USER_STORAGE_KEY = '@MedBoxDelivery:user';
 const TEMP_SIGNUP_KEY = '@MedBoxDelivery:temp_signup';
+const CREDENTIALS_KEY = '@MedBoxDelivery:credentials'; // ✅ NOVO - Armazena credenciais
 
 export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [user, setUser] = useState<User | null>(null);
@@ -40,6 +41,27 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     } catch (error) {
       console.error('Erro ao salvar usuário:', error);
       throw new Error('Não foi possível salvar os dados');
+    }
+  };
+
+  // ✅ NOVA FUNÇÃO - Salva credenciais (email + senha)
+  const saveCredentials = async (email: string, password: string) => {
+    try {
+      const credentials = { email, password };
+      await AsyncStorage.setItem(CREDENTIALS_KEY, JSON.stringify(credentials));
+    } catch (error) {
+      console.error('Erro ao salvar credenciais:', error);
+    }
+  };
+
+  // ✅ NOVA FUNÇÃO - Busca credenciais salvas
+  const getStoredCredentials = async (): Promise<{ email: string; password: string } | null> => {
+    try {
+      const data = await AsyncStorage.getItem(CREDENTIALS_KEY);
+      return data ? JSON.parse(data) : null;
+    } catch (error) {
+      console.error('Erro ao buscar credenciais:', error);
+      return null;
     }
   };
 
@@ -81,6 +103,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       if (!data.name?.trim()) throw new Error('Nome é obrigatório');
       if (!data.cpf?.trim()) throw new Error('CPF é obrigatório');
       if (!data.phone?.trim()) throw new Error('Telefone é obrigatório');
+      if (!data.email?.trim()) throw new Error('E-mail é obrigatório');
 
       // Salva temporariamente (NÃO cria usuário ainda)
       await saveTempSignupData(data);
@@ -108,6 +131,11 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         registrationStatus: 'pendente',
       };
 
+      // ✅ SALVA AS CREDENCIAIS (email + senha do cadastro)
+      if (tempData.password) {
+        await saveCredentials(tempData.email || '', tempData.password);
+      }
+
       await saveUser(newUser);
       await clearTempSignupData();
       
@@ -116,24 +144,48 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     }
   };
 
-  const signIn = async (cpf: string) => {
+  // ✅ ATUALIZADO - signIn agora recebe email e senha
+  const signIn = async (email: string, password: string) => {
     try {
       setIsLoading(true);
       await new Promise(resolve => setTimeout(resolve, 1500));
       
-      if (!cpf?.trim()) throw new Error('CPF é obrigatório');
+      if (!email?.trim()) throw new Error('E-mail é obrigatório');
+      if (!password?.trim()) throw new Error('Senha é obrigatória');
 
+      // ✅ VALIDAÇÃO BÁSICA - Verifica se as credenciais batem
+      const storedCredentials = await getStoredCredentials();
+      
+      if (storedCredentials) {
+        // Se existe usuário cadastrado, valida email e senha
+        if (storedCredentials.email !== email.trim()) {
+          throw new Error('E-mail não encontrado');
+        }
+        if (storedCredentials.password !== password) {
+          throw new Error('Senha incorreta');
+        }
+
+        // Se passou na validação, busca o usuário salvo
+        const storedUser = await AsyncStorage.getItem(USER_STORAGE_KEY);
+        if (storedUser) {
+          setUser(JSON.parse(storedUser));
+          return;
+        }
+      }
+
+      // Se não tem usuário cadastrado, cria um temporário (para testes)
       const mockUser: User = {
         id: Date.now().toString(),
-        name: 'Entregador',
-        email: '',
-        cpf: cpf.trim(),
-        phone: '',
+        name: 'Entregador Teste',
+        email: email.trim(),
+        cpf: '000.000.000-00',
+        phone: '(00) 00000-0000',
         status: 'indisponivel',
         registrationStatus: 'aprovado',
       };
 
       await saveUser(mockUser);
+      await saveCredentials(email, password);
       
     } catch (error) {
       throw error;
@@ -147,6 +199,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       setIsLoading(true);
       await new Promise(resolve => setTimeout(resolve, 500));
       await AsyncStorage.removeItem(USER_STORAGE_KEY);
+      // ✅ NÃO remove credenciais no logout, para poder fazer login novamente
       setUser(null);
     } catch (error) {
       console.error('Erro ao fazer logout:', error);
@@ -194,7 +247,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         signOut,
         updateStatus,
         updateProfile,
-        completeSignUp, // NOVO
+        completeSignUp,
       }}
     >
       {children}

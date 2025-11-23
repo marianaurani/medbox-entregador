@@ -41,7 +41,7 @@ const VerificationMethodScreen: React.FC<Props> = ({ navigation, route }) => {
     <SafeAreaView style={styles.container} edges={['top', 'bottom']}>
       <StatusBar barStyle="dark-content" backgroundColor={colors.backgroundLight} />
 
-      {/* Header Padronizado */}
+      {/* ✅ HEADER PADRONIZADO */}
       <View style={styles.header}>
         <TouchableOpacity
           onPress={() => navigation.goBack()}
@@ -50,12 +50,13 @@ const VerificationMethodScreen: React.FC<Props> = ({ navigation, route }) => {
         >
           <Ionicons name="arrow-back" size={24} color={colors.text} />
         </TouchableOpacity>
-        <Text style={styles.headerTitle}>MEDBOX PARA ENTREGADORES</Text>
+        <Text style={styles.headerTitle}>Verificação</Text>
         <View style={{ width: 24 }} />
       </View>
 
       {/* Conteúdo */}
       <View style={styles.content}>
+        {/* ✅ TÍTULO PADRONIZADO */}
         <Text style={styles.title}>
           Como deseja receber o seu código de segurança?
         </Text>
@@ -127,28 +128,29 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'space-between',
     paddingHorizontal: 20,
-    paddingVertical: 20,
+    paddingVertical: 16,
     backgroundColor: colors.backgroundLight,
   },
   backButton: {
     padding: 4,
   },
   headerTitle: {
-    fontSize: 12,
+    fontSize: 16,
     fontWeight: '600',
     color: colors.text,
-    letterSpacing: 0.5,
   },
   content: {
     flex: 1,
     paddingHorizontal: 20,
-    paddingTop: 20,
+    paddingTop: 8,
   },
+  // ✅ TÍTULO PADRONIZADO
   title: {
-    fontSize: 22,
-    fontWeight: '600',
+    fontSize: 28,
+    fontWeight: 'bold',
     color: colors.text,
     marginBottom: 12,
+    lineHeight: 32,
   },
   subtitle: {
     fontSize: 14,

@@ -25,31 +25,49 @@ type Props = NativeStackScreenProps<AuthStackParamList, 'Login'>;
 
 const LoginScreen: React.FC<Props> = ({ navigation }) => {
   const { signIn } = useAuth();
-  const [cpf, setCpf] = useState('');
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
+  const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
   
   const scrollViewRef = useRef<ScrollView>(null);
 
-  const formatCPF = (text: string) => {
-    const numbers = text.replace(/\D/g, '');
-    if (numbers.length <= 11) {
-      return numbers
-        .replace(/(\d{3})(\d)/, '$1.$2')
-        .replace(/(\d{3})(\d)/, '$1.$2')
-        .replace(/(\d{3})(\d{1,2})$/, '$1-$2');
-    }
-    return text;
+  const validateEmail = (email: string) => {
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    return emailRegex.test(email);
   };
 
-  const handleInputFocus = () => {
+  const handleEmailFocus = () => {
     setTimeout(() => {
-      scrollViewRef.current?.scrollTo({ y: 150, animated: true });
+      scrollViewRef.current?.scrollTo({ y: 100, animated: true });
+    }, 100);
+  };
+
+  const handlePasswordFocus = () => {
+    setTimeout(() => {
+      scrollViewRef.current?.scrollTo({ y: 200, animated: true });
     }, 100);
   };
 
   const handleLogin = async () => {
-    if (!cpf.trim() || cpf.replace(/\D/g, '').length !== 11) {
-      Alert.alert('Atenção', 'Digite um CPF válido');
+    // ✅ VALIDAÇÕES DE EMAIL E SENHA
+    if (!email.trim()) {
+      Alert.alert('Atenção', 'Digite seu e-mail');
+      return;
+    }
+    
+    if (!validateEmail(email)) {
+      Alert.alert('Atenção', 'Digite um e-mail válido');
+      return;
+    }
+
+    if (!password.trim()) {
+      Alert.alert('Atenção', 'Digite sua senha');
+      return;
+    }
+
+    if (password.length < 6) {
+      Alert.alert('Atenção', 'A senha deve ter no mínimo 6 caracteres');
       return;
     }
 
@@ -57,10 +75,11 @@ const LoginScreen: React.FC<Props> = ({ navigation }) => {
 
     try {
       setLoading(true);
-      await signIn(cpf);
+      // ✅ CORRIGIDO - Agora passa email e senha
+      await signIn(email, password);
       Alert.alert('Bem-vindo de volta! 👋', 'Login realizado com sucesso.');
     } catch (error: any) {
-      Alert.alert('Erro', error.message || 'Erro ao fazer login');
+      Alert.alert('Erro', error.message || 'E-mail ou senha incorretos');
     } finally {
       setLoading(false);
     }
@@ -75,7 +94,7 @@ const LoginScreen: React.FC<Props> = ({ navigation }) => {
         behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
         keyboardVerticalOffset={0}
       >
-        {/* Header Padronizado */}
+        {/* ✅ HEADER PADRONIZADO */}
         <View style={styles.header}>
           <TouchableOpacity 
             onPress={() => navigation.goBack()}
@@ -84,7 +103,7 @@ const LoginScreen: React.FC<Props> = ({ navigation }) => {
           >
             <Ionicons name="arrow-back" size={24} color={colors.text} />
           </TouchableOpacity>
-          <Text style={styles.headerTitle}>Trocar de conta</Text>
+          <Text style={styles.headerTitle}>Login</Text>
           <View style={{ width: 24 }} />
         </View>
 
@@ -99,35 +118,69 @@ const LoginScreen: React.FC<Props> = ({ navigation }) => {
             <Ionicons name="person-circle-outline" size={80} color={colors.primary} />
           </View>
 
-          <Text style={styles.title}>Acessar outra conta</Text>
+          {/* ✅ TÍTULO PADRONIZADO */}
+          <Text style={styles.title}>Acesse sua conta</Text>
           <Text style={styles.subtitle}>
-            Digite o CPF cadastrado para acessar
+            Digite seu e-mail e senha para entrar
           </Text>
 
           <View style={styles.form}>
+            {/* ✅ CAMPO EMAIL */}
             <View style={styles.inputGroup}>
-              <Text style={styles.label}>CPF</Text>
+              <Text style={styles.label}>E-mail</Text>
               <TextInput
                 style={styles.input}
-                placeholder="000.000.000-00"
-                value={cpf}
-                onChangeText={(text) => setCpf(formatCPF(text))}
-                keyboardType="numeric"
-                maxLength={14}
+                placeholder="seuemail@exemplo.com"
+                value={email}
+                onChangeText={setEmail}
+                keyboardType="email-address"
+                autoCapitalize="none"
                 editable={!loading}
-                onFocus={handleInputFocus}
+                onFocus={handleEmailFocus}
               />
             </View>
 
-            <Text style={styles.info}>
-              ℹ️ Caso não tenha cadastro, crie uma nova conta primeiro.
-            </Text>
+            {/* ✅ CAMPO SENHA */}
+            <View style={styles.inputGroup}>
+              <Text style={styles.label}>Senha</Text>
+              <View style={styles.passwordContainer}>
+                <TextInput
+                  style={styles.passwordInput}
+                  placeholder="Digite sua senha"
+                  value={password}
+                  onChangeText={setPassword}
+                  secureTextEntry={!showPassword}
+                  editable={!loading}
+                  onFocus={handlePasswordFocus}
+                  autoCapitalize="none"
+                />
+                <TouchableOpacity
+                  onPress={() => setShowPassword(!showPassword)}
+                  style={styles.eyeIcon}
+                  disabled={loading}
+                >
+                  <Ionicons
+                    name={showPassword ? 'eye-off' : 'eye'}
+                    size={24}
+                    color={colors.textSecondary}
+                  />
+                </TouchableOpacity>
+              </View>
+            </View>
+
+            {/* Link "Esqueceu a senha?" */}
+            <TouchableOpacity 
+              style={styles.forgotPasswordButton}
+              disabled={loading}
+            >
+              <Text style={styles.forgotPasswordText}>Esqueceu a senha?</Text>
+            </TouchableOpacity>
           </View>
 
           <View style={{ height: 200 }} />
         </ScrollView>
 
-        {/* Footer Padronizado */}
+        {/* ✅ FOOTER PADRONIZADO */}
         <View style={styles.footer}>
           <TouchableOpacity 
             style={[styles.button, loading && styles.buttonDisabled]}
@@ -169,7 +222,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'space-between',
     paddingHorizontal: 20,
-    paddingVertical: 20,
+    paddingVertical: 16,
     backgroundColor: colors.backgroundLight,
   },
   backButton: {
@@ -188,31 +241,34 @@ const styles = StyleSheet.create({
   },
   iconContainer: {
     alignItems: 'center',
-    marginVertical: 30,
+    marginTop: 20,
+    marginBottom: 24,
   },
+  // ✅ TÍTULO PADRONIZADO
   title: {
-    fontSize: 24,
+    fontSize: 28,
     fontWeight: 'bold',
     color: colors.text,
     marginBottom: 8,
     textAlign: 'center',
+    lineHeight: 32, // Altura padronizada
   },
   subtitle: {
     fontSize: 14,
     color: colors.textSecondary,
     textAlign: 'center',
-    marginBottom: 30,
+    marginBottom: 32,
+    lineHeight: 20,
   },
   form: {
-    gap: 15,
+    gap: 20,
   },
   inputGroup: {
-    marginBottom: 10,
+    gap: 8,
   },
   label: {
     fontSize: 14,
     color: colors.text,
-    marginBottom: 8,
     fontWeight: '600',
   },
   input: {
@@ -225,29 +281,51 @@ const styles = StyleSheet.create({
     fontSize: 16,
     color: colors.text,
   },
-  info: {
-    fontSize: 13,
-    color: colors.textSecondary,
-    lineHeight: 18,
+  // ✅ CAMPO DE SENHA COM ÍCONE
+  passwordContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
     backgroundColor: colors.backgroundLight,
-    padding: 12,
-    borderRadius: 8,
     borderWidth: 1,
     borderColor: colors.border,
+    borderRadius: 8,
+  },
+  passwordInput: {
+    flex: 1,
+    paddingVertical: 14,
+    paddingHorizontal: 16,
+    fontSize: 16,
+    color: colors.text,
+  },
+  eyeIcon: {
+    paddingHorizontal: 16,
+    paddingVertical: 14,
+  },
+  forgotPasswordButton: {
+    alignSelf: 'flex-end',
+    marginTop: -8,
+  },
+  forgotPasswordText: {
+    fontSize: 14,
+    color: colors.primary,
+    fontWeight: '600',
   },
   footer: {
     backgroundColor: colors.backgroundLight,
     paddingHorizontal: 20,
-    paddingTop: 15,
-    paddingBottom: Platform.OS === 'ios' ? 0 : 15,
+    paddingTop: 16,
+    paddingBottom: Platform.OS === 'ios' ? 0 : 16,
     borderTopWidth: 1,
     borderTopColor: colors.border,
   },
+  // ✅ BOTÃO PADRONIZADO
   button: {
     backgroundColor: colors.buttonSecondary,
     paddingVertical: 16,
     borderRadius: 8,
     alignItems: 'center',
+    height: 52, // Altura padronizada
+    justifyContent: 'center',
   },
   buttonDisabled: {
     opacity: 0.6,

@@ -9,6 +9,7 @@ import {
   Alert,
   ActivityIndicator,
   StatusBar,
+  Platform,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
@@ -59,7 +60,6 @@ const SecurityCodeScreen: React.FC<Props> = ({ navigation, route }) => {
       setLoading(true);
       await new Promise(resolve => setTimeout(resolve, 1500));
       
-      // Código validado com sucesso
       navigation.navigate('CreatePassword');
     } catch (error: any) {
       Alert.alert('Erro', 'Código inválido. Tente novamente.');
@@ -86,18 +86,20 @@ const SecurityCodeScreen: React.FC<Props> = ({ navigation, route }) => {
   };
 
   return (
-    <SafeAreaView style={styles.container}>
+    <SafeAreaView style={styles.container} edges={['top', 'bottom']}>
       <StatusBar barStyle="dark-content" backgroundColor={colors.backgroundLight} />
 
-      {/* Header */}
+      {/* ✅ HEADER PADRONIZADO */}
       <View style={styles.header}>
         <TouchableOpacity
           onPress={() => navigation.goBack()}
           style={styles.backButton}
+          disabled={loading}
         >
           <Ionicons name="arrow-back" size={24} color={colors.text} />
         </TouchableOpacity>
-        <Text style={styles.headerTitle}>MEDBOX PARA ENTREGADORES</Text>
+        <Text style={styles.headerTitle}>Verificação</Text>
+        <View style={{ width: 24 }} />
       </View>
 
       {/* Conteúdo */}
@@ -113,6 +115,7 @@ const SecurityCodeScreen: React.FC<Props> = ({ navigation, route }) => {
           </View>
         </View>
 
+        {/* ✅ TÍTULO PADRONIZADO */}
         <Text style={styles.title}>Digite o código de segurança</Text>
 
         <Text style={styles.subtitle}>
@@ -188,28 +191,27 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: colors.backgroundLight,
   },
+  // ✅ HEADER PADRONIZADO
   header: {
-    paddingTop: 20,
-    paddingHorizontal: 20,
-    paddingBottom: 20,
+    flexDirection: 'row',
     alignItems: 'center',
+    justifyContent: 'space-between',
+    paddingHorizontal: 20,
+    paddingVertical: 16,
+    backgroundColor: colors.backgroundLight,
   },
   backButton: {
-    position: 'absolute',
-    left: 20,
-    top: 20,
     padding: 4,
   },
   headerTitle: {
-    fontSize: 12,
+    fontSize: 16,
     fontWeight: '600',
     color: colors.text,
-    letterSpacing: 0.5,
   },
   content: {
     flex: 1,
     paddingHorizontal: 20,
-    paddingTop: 20,
+    paddingTop: 8,
   },
   iconContainer: {
     alignItems: 'center',
@@ -223,12 +225,14 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
   },
+  // ✅ TÍTULO PADRONIZADO
   title: {
-    fontSize: 22,
-    fontWeight: '600',
+    fontSize: 28,
+    fontWeight: 'bold',
     color: colors.text,
     textAlign: 'center',
     marginBottom: 12,
+    lineHeight: 32,
   },
   subtitle: {
     fontSize: 14,

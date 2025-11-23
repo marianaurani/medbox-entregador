@@ -6,7 +6,6 @@ import {
   TouchableOpacity,
   StyleSheet,
   StatusBar,
-  Alert,
   ScrollView,
   Platform,
 } from 'react-native';
@@ -20,21 +19,14 @@ import colors from '../../constants/colors';
 type Props = NativeStackScreenProps<AuthStackParamList, 'RegistrationComplete'>;
 
 const RegistrationCompleteScreen: React.FC<Props> = ({ navigation }) => {
-  const auth = useAuth();
+  const { completeSignUp } = useAuth();
 
+  // ✅ CORRIGIDO - Função simplificada sem try/catch desnecessário
   const handleEnterApp = async () => {
-    try {
-      // Verifica se completeSignUp existe no contexto
-      if (auth.completeSignUp) {
-        await auth.completeSignUp();
-      } else {
-        // Se não existir, apenas força a autenticação
-        console.log('completeSignUp não disponível, usuário já está autenticado');
-      }
-    } catch (error: any) {
-      console.error('Erro ao completar cadastro:', error);
-      // Remove o Alert de erro, pois o usuário já está logado
+    if (completeSignUp) {
+      await completeSignUp();
     }
+    // Se completeSignUp não existir, o AuthContext já está gerenciando o estado
   };
 
   return (
@@ -47,7 +39,8 @@ const RegistrationCompleteScreen: React.FC<Props> = ({ navigation }) => {
         contentContainerStyle={styles.scrollContent}
         showsVerticalScrollIndicator={false}
       >
-        <Text style={styles.title}>Cadastro enviado com sucesso!</Text>
+        {/* ✅ TÍTULO PADRONIZADO */}
+        <Text style={styles.title}>Cadastro enviado{'\n'}com sucesso!</Text>
         
         {/* Ícone de sucesso */}
         <View style={styles.iconContainer}>
@@ -127,7 +120,7 @@ const RegistrationCompleteScreen: React.FC<Props> = ({ navigation }) => {
         <View style={{ height: 120 }} />
       </ScrollView>
 
-      {/* Footer Fixo */}
+      {/* ✅ FOOTER E BOTÃO PADRONIZADOS */}
       <View style={styles.footer}>
         <TouchableOpacity
           style={styles.buttonPrimary}
@@ -154,7 +147,7 @@ const styles = StyleSheet.create({
   },
   scrollContent: {
     paddingHorizontal: 20,
-    paddingTop: 20,
+    paddingTop: 24,
   },
   iconContainer: {
     alignItems: 'center',
@@ -176,13 +169,14 @@ const styles = StyleSheet.create({
     shadowRadius: 8,
     elevation: 8,
   },
+  // ✅ TÍTULO PADRONIZADO
   title: {
-    fontSize: 24,
+    fontSize: 28,
     fontWeight: 'bold',
     color: colors.text,
     textAlign: 'center',
-    marginBottom: 12,
-    lineHeight: 32,
+    marginBottom: 20,
+    lineHeight: 32, // Altura padronizada
   },
   subtitle: {
     fontSize: 14,
@@ -259,16 +253,19 @@ const styles = StyleSheet.create({
   footer: {
     backgroundColor: colors.backgroundLight,
     paddingHorizontal: 20,
-    paddingTop: 15,
-    paddingBottom: Platform.OS === 'ios' ? 0 : 15,
+    paddingTop: 16,
+    paddingBottom: Platform.OS === 'ios' ? 0 : 16,
     borderTopWidth: 1,
     borderTopColor: colors.border,
   },
+  // ✅ BOTÃO PADRONIZADO
   buttonPrimary: {
     backgroundColor: colors.buttonSecondary,
     paddingVertical: 16,
     borderRadius: 8,
     alignItems: 'center',
+    height: 52, // Altura padronizada
+    justifyContent: 'center',
     marginBottom: 10,
   },
   buttonPrimaryText: {

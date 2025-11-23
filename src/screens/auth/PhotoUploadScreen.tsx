@@ -10,6 +10,7 @@ import {
   StatusBar,
   Image,
   ScrollView,
+  Platform,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
@@ -21,12 +22,10 @@ import colors from '../../constants/colors';
 type Props = NativeStackScreenProps<AuthStackParamList, 'PhotoUpload'>;
 
 const PhotoUploadScreen: React.FC<Props> = ({ navigation, route }) => {
-  // ✅ RECEBE O VEÍCULO DOS PARAMS
   const { vehicleType } = route.params;
   const [photo, setPhoto] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
 
-  // ✅ DETERMINA SE PRECISA DE CNH
   const requiresCNH = vehicleType === 'moto' || vehicleType === 'carro';
 
   const requestCameraPermission = async () => {
@@ -103,11 +102,9 @@ const PhotoUploadScreen: React.FC<Props> = ({ navigation, route }) => {
       setLoading(true);
       await new Promise(resolve => setTimeout(resolve, 1500));
       
-      // ✅ LÓGICA CONDICIONAL: Moto/Carro vai para CNH, Bike pula
       if (requiresCNH) {
         navigation.navigate('CNHUpload', { vehicleType });
       } else {
-        // Se for bike, pula a CNH e vai direto para concluir
         navigation.navigate('RegistrationComplete');
       }
     } catch (error: any) {
@@ -118,10 +115,10 @@ const PhotoUploadScreen: React.FC<Props> = ({ navigation, route }) => {
   };
 
   return (
-    <SafeAreaView style={styles.container} edges={['top']}>
+    <SafeAreaView style={styles.container} edges={['top', 'bottom']}>
       <StatusBar barStyle="dark-content" backgroundColor={colors.backgroundLight} />
 
-      {/* Header */}
+      {/* ✅ HEADER PADRONIZADO */}
       <View style={styles.header}>
         <TouchableOpacity
           onPress={() => navigation.goBack()}
@@ -160,10 +157,10 @@ const PhotoUploadScreen: React.FC<Props> = ({ navigation, route }) => {
           )}
         </View>
 
+        {/* ✅ TÍTULO PADRONIZADO */}
         <Text style={styles.title}>Adicione uma foto do seu rosto</Text>
         <Text style={styles.subtitle}>
-          Tire uma selfie ou escolha uma foto recente da galeria. Certifique-se de que seu rosto
-          esteja bem visível e iluminado.
+          Tire uma selfie ou escolha uma foto recente da galeria. Certifique-se de que seu rosto esteja bem visível e iluminado.
         </Text>
 
         {/* Botões de ação */}
@@ -204,7 +201,7 @@ const PhotoUploadScreen: React.FC<Props> = ({ navigation, route }) => {
         <View style={{ height: 120 }} />
       </ScrollView>
 
-      {/* Botão Fixo */}
+      {/* ✅ FOOTER E BOTÃO PADRONIZADOS */}
       <View style={styles.footer}>
         <TouchableOpacity
           style={[
@@ -230,12 +227,13 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: colors.backgroundLight,
   },
+  // ✅ HEADER PADRONIZADO
   header: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
     paddingHorizontal: 20,
-    paddingBottom: 20,
+    paddingVertical: 16,
     backgroundColor: colors.backgroundLight,
   },
   backButton: {
@@ -251,6 +249,7 @@ const styles = StyleSheet.create({
   },
   scrollContent: {
     paddingHorizontal: 20,
+    paddingTop: 8,
   },
   photoContainer: {
     alignItems: 'center',
@@ -285,12 +284,14 @@ const styles = StyleSheet.create({
     backgroundColor: colors.backgroundLight,
     borderRadius: 16,
   },
+  // ✅ TÍTULO PADRONIZADO
   title: {
-    fontSize: 22,
+    fontSize: 28,
     fontWeight: 'bold',
     color: colors.text,
     textAlign: 'center',
-    marginBottom: 8,
+    marginBottom: 12,
+    lineHeight: 32,
   },
   subtitle: {
     fontSize: 14,
@@ -346,19 +347,23 @@ const styles = StyleSheet.create({
     marginBottom: 4,
     lineHeight: 18,
   },
+  // ✅ FOOTER PADRONIZADO
   footer: {
     backgroundColor: colors.backgroundLight,
     paddingHorizontal: 20,
-    paddingTop: 15,
-    paddingBottom: 40,
+    paddingTop: 16,
+    paddingBottom: Platform.OS === 'ios' ? 0 : 16,
     borderTopWidth: 1,
     borderTopColor: colors.border,
   },
+  // ✅ BOTÃO PADRONIZADO
   button: {
     backgroundColor: colors.buttonSecondary,
     paddingVertical: 16,
     borderRadius: 8,
     alignItems: 'center',
+    height: 52,
+    justifyContent: 'center',
   },
   buttonDisabled: {
     opacity: 0.6,

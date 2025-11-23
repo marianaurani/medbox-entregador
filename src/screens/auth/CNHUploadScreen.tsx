@@ -110,7 +110,7 @@ const CNHUploadScreen: React.FC<Props> = ({ navigation }) => {
     <SafeAreaView style={styles.container} edges={['top', 'bottom']}>
       <StatusBar barStyle="dark-content" backgroundColor={colors.backgroundLight} />
 
-      {/* Header */}
+      {/* ✅ HEADER PADRONIZADO */}
       <View style={styles.header}>
         <TouchableOpacity
           onPress={() => navigation.goBack()}
@@ -150,10 +150,10 @@ const CNHUploadScreen: React.FC<Props> = ({ navigation }) => {
           )}
         </View>
 
+        {/* ✅ TÍTULO PADRONIZADO */}
         <Text style={styles.title}>Adicione uma foto da sua CNH</Text>
         <Text style={styles.subtitle}>
-          Fotografe sua CNH aberta. Certifique-se de que todos os dados estejam legíveis e a foto
-          esteja nítida.
+          Fotografe sua CNH aberta. Certifique-se de que todos os dados estejam legíveis e a foto esteja nítida.
         </Text>
 
         {/* Botões de ação */}
@@ -202,7 +202,7 @@ const CNHUploadScreen: React.FC<Props> = ({ navigation }) => {
         <View style={{ height: 120 }} />
       </ScrollView>
 
-      {/* Botão Fixo */}
+      {/* ✅ FOOTER E BOTÃO PADRONIZADOS */}
       <View style={styles.footer}>
         <TouchableOpacity
           style={[
@@ -228,12 +228,13 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: colors.backgroundLight,
   },
+  // ✅ HEADER PADRONIZADO
   header: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
     paddingHorizontal: 20,
-    paddingVertical: 20,
+    paddingVertical: 16,
     backgroundColor: colors.backgroundLight,
   },
   backButton: {
@@ -249,6 +250,7 @@ const styles = StyleSheet.create({
   },
   scrollContent: {
     paddingHorizontal: 20,
+    paddingTop: 8,
   },
   photoContainer: {
     alignItems: 'center',
@@ -289,12 +291,14 @@ const styles = StyleSheet.create({
     backgroundColor: colors.backgroundLight,
     borderRadius: 16,
   },
+  // ✅ TÍTULO PADRONIZADO
   title: {
-    fontSize: 22,
+    fontSize: 28,
     fontWeight: 'bold',
     color: colors.text,
     textAlign: 'center',
-    marginBottom: 8,
+    marginBottom: 12,
+    lineHeight: 32,
   },
   subtitle: {
     fontSize: 14,
@@ -367,19 +371,23 @@ const styles = StyleSheet.create({
     marginBottom: 4,
     lineHeight: 18,
   },
+  // ✅ FOOTER PADRONIZADO
   footer: {
     backgroundColor: colors.backgroundLight,
     paddingHorizontal: 20,
-    paddingTop: 15,
-    paddingBottom: Platform.OS === 'ios' ? 0 : 15,
+    paddingTop: 16,
+    paddingBottom: Platform.OS === 'ios' ? 0 : 16,
     borderTopWidth: 1,
     borderTopColor: colors.border,
   },
+  // ✅ BOTÃO PADRONIZADO
   button: {
     backgroundColor: colors.buttonSecondary,
     paddingVertical: 16,
     borderRadius: 8,
     alignItems: 'center',
+    height: 52,
+    justifyContent: 'center',
   },
   buttonDisabled: {
     opacity: 0.6,
