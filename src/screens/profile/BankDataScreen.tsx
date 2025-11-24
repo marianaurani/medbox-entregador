@@ -1,4 +1,4 @@
-// src/screens/profile/BankDataScreen.tsx (REDESIGN MODERNO)
+// src/screens/profile/BankDataScreen.tsx (CORRIGIDO)
 import React, { useState } from 'react';
 import {
   View,
@@ -14,24 +14,37 @@ import { useNavigation, NavigationProp } from '@react-navigation/native';
 import { useBank, PixKeyType } from '../../contexts/BankContext';
 import colors from '../../constants/colors';
 
-type ProfileStackParamList = {
-  ProfileHome: undefined;
+// ✅ CORRIGIDO: Tipo genérico para aceitar navegação de qualquer lugar
+type NavigationParams = {
+  MenuHome: undefined;
   BankData: undefined;
   BankAccount: undefined;
   AddPixKey: { pixKeyId?: string } | undefined;
+  WalletHome: undefined;
+  Withdraw: undefined;
 };
 
 const BankDataScreen: React.FC = () => {
-  const navigation = useNavigation<NavigationProp<ProfileStackParamList>>();
+  const navigation = useNavigation<NavigationProp<NavigationParams>>();
   const { pixKeys, defaultPixKey, deletePixKey, setDefaultPixKey, bankAccount, hasBankAccount } = useBank();
   const [expandedKeyId, setExpandedKeyId] = useState<string | null>(null);
+
+  // ✅ Handler de voltar customizado
+  const handleGoBack = () => {
+    if (navigation.canGoBack()) {
+      navigation.goBack();
+    } else {
+      // Se não pode voltar, vai para WalletHome como fallback
+      navigation.navigate('WalletHome' as any);
+    }
+  };
 
   const getPixIcon = (type: PixKeyType): keyof typeof Ionicons.glyphMap => {
     switch (type) {
       case 'cpf': return 'person';
-      case 'phone': return 'call';
+      case 'telefone': return 'call';
       case 'email': return 'mail';
-      case 'random': return 'key';
+      case 'aleatoria': return 'key';
       default: return 'cash';
     }
   };
@@ -39,9 +52,9 @@ const BankDataScreen: React.FC = () => {
   const getPixLabel = (type: PixKeyType) => {
     switch (type) {
       case 'cpf': return 'CPF';
-      case 'phone': return 'Telefone';
+      case 'telefone': return 'Telefone';
       case 'email': return 'E-mail';
-      case 'random': return 'Chave Aleatória';
+      case 'aleatoria': return 'Chave Aleatória';
       default: return 'Outro';
     }
   };
@@ -81,7 +94,7 @@ const BankDataScreen: React.FC = () => {
     <SafeAreaView style={styles.container} edges={['top']}>
       {/* Header */}
       <View style={styles.header}>
-        <TouchableOpacity onPress={() => navigation.goBack()}>
+        <TouchableOpacity onPress={handleGoBack}>
           <Ionicons name="arrow-back" size={24} color={colors.text} />
         </TouchableOpacity>
         <Text style={styles.headerTitle}>Dados Bancários</Text>

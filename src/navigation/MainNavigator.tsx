@@ -81,21 +81,13 @@ const TabNavigatorWrapper = () => {
               <Ionicons name="menu" size={size} color={color} />
             ),
           }}
-          listeners={({ navigation, route }) => ({
+          listeners={({ navigation }) => ({
             tabPress: (e) => {
-              // Pega o estado atual da navegação do Menu
-              const state = navigation.getState();
-              const menuRoute = state.routes.find((r: any) => r.name === 'Menu');
-              
-              // Se o Menu já está ativo e não está em MenuHome, reseta para MenuHome
-              if (menuRoute && state.index === state.routes.indexOf(menuRoute)) {
-                const menuState = menuRoute.state;
-                if (menuState && menuState.index !== 0) {
-                  // Não está em MenuHome, então navega
-                  e.preventDefault();
-                  navigation.navigate('Menu', { screen: 'MenuHome' });
-                }
-              }
+              // Sempre que clicar na tab Menu, reseta para MenuHome
+              e.preventDefault();
+              navigation.navigate('Menu', { 
+                screen: 'MenuHome',
+              });
             },
           })}
         />
@@ -114,3 +106,5 @@ const styles = StyleSheet.create({
     backgroundColor: colors.background,
   },
 });
+
+export default MainNavigator;

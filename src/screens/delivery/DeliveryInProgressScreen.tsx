@@ -62,7 +62,6 @@ const DeliveryInProgressScreen: React.FC = () => {
     ]);
   };
 
-  // ✅ NOVO - Função para abrir chat com o cliente
   const handleChatCustomer = () => {
     navigation.navigate('Chat', {
       chatType: 'customer',
@@ -71,7 +70,6 @@ const DeliveryInProgressScreen: React.FC = () => {
     });
   };
 
-  // ✅ NOVO - Função para abrir chat com a farmácia
   const handleChatPharmacy = () => {
     navigation.navigate('Chat', {
       chatType: 'pharmacy',
@@ -206,20 +204,20 @@ const DeliveryInProgressScreen: React.FC = () => {
                 <Text style={styles.locationAddress}>{delivery.pharmacy.address}</Text>
               </View>
             </View>
+            {/* ✅ SEMPRE mostra os 3 botões */}
             <View style={styles.actionButtons}>
               <TouchableOpacity
                 style={styles.callButton}
                 onPress={() => handleCall(delivery.pharmacy.phone, delivery.pharmacy.name)}
               >
-                <Ionicons name="call" size={18} color="white" />
+                <Ionicons name="call" size={16} color="white" />
                 <Text style={styles.callButtonText}>Ligar</Text>
               </TouchableOpacity>
-              {/* ✅ NOVO - Botão de Chat com Farmácia */}
               <TouchableOpacity
                 style={styles.chatButton}
                 onPress={handleChatPharmacy}
               >
-                <Ionicons name="chatbubble" size={18} color="white" />
+                <Ionicons name="chatbubble" size={16} color="white" />
                 <Text style={styles.chatButtonText}>Chat</Text>
               </TouchableOpacity>
               <TouchableOpacity
@@ -228,8 +226,8 @@ const DeliveryInProgressScreen: React.FC = () => {
                   handleNavigate(delivery.pharmacy.latitude, delivery.pharmacy.longitude)
                 }
               >
-                <Ionicons name="navigate" size={18} color="white" />
-                <Text style={styles.navigateButtonText}>Navegar</Text>
+                <Ionicons name="navigate" size={16} color="white" />
+                <Text style={styles.navigateButtonText}>Ir</Text>
               </TouchableOpacity>
             </View>
           </View>
@@ -253,34 +251,31 @@ const DeliveryInProgressScreen: React.FC = () => {
                 )}
               </View>
             </View>
-            {/* ✅ ATUALIZADO - Sempre mostra os botões (não só quando em_rota) */}
+            {/* ✅ SEMPRE mostra os 3 botões */}
             <View style={styles.actionButtons}>
               <TouchableOpacity
                 style={styles.callButton}
                 onPress={() => handleCall(delivery.customer.phone, delivery.customer.name)}
               >
-                <Ionicons name="call" size={18} color="white" />
+                <Ionicons name="call" size={16} color="white" />
                 <Text style={styles.callButtonText}>Ligar</Text>
               </TouchableOpacity>
-              {/* ✅ NOVO - Botão de Chat com Cliente */}
               <TouchableOpacity
                 style={styles.chatButton}
                 onPress={handleChatCustomer}
               >
-                <Ionicons name="chatbubble" size={18} color="white" />
+                <Ionicons name="chatbubble" size={16} color="white" />
                 <Text style={styles.chatButtonText}>Chat</Text>
               </TouchableOpacity>
-              {delivery.status === 'em_rota' && (
-                <TouchableOpacity
-                  style={styles.navigateButton}
-                  onPress={() =>
-                    handleNavigate(delivery.customer.latitude, delivery.customer.longitude)
-                  }
-                >
-                  <Ionicons name="navigate" size={18} color="white" />
-                  <Text style={styles.navigateButtonText}>Navegar</Text>
-                </TouchableOpacity>
-              )}
+              <TouchableOpacity
+                style={styles.navigateButton}
+                onPress={() =>
+                  handleNavigate(delivery.customer.latitude, delivery.customer.longitude)
+                }
+              >
+                <Ionicons name="navigate" size={16} color="white" />
+                <Text style={styles.navigateButtonText}>Ir</Text>
+              </TouchableOpacity>
             </View>
           </View>
         </View>
@@ -309,7 +304,7 @@ const DeliveryInProgressScreen: React.FC = () => {
           </View>
         </View>
 
-        {/* Botão de Ação - DENTRO DO SCROLL */}
+        {/* Botão de Ação */}
         {nextStep && (
           <View style={styles.actionButtonContainer}>
             <TouchableOpacity style={styles.actionButton} onPress={nextStep.action}>
@@ -319,7 +314,6 @@ const DeliveryInProgressScreen: React.FC = () => {
           </View>
         )}
 
-        {/* Espaço extra no final para não ficar colado no menu */}
         <View style={{ height: 100 }} />
       </ScrollView>
 
@@ -544,9 +538,11 @@ const styles = StyleSheet.create({
     color: colors.textLight,
     marginTop: 2,
   },
+  // ✅ ESTILOS ATUALIZADOS DOS BOTÕES
   actionButtons: {
     flexDirection: 'row',
-    gap: 10,
+    gap: 8,
+    marginTop: 12,
   },
   callButton: {
     flex: 1,
@@ -556,14 +552,13 @@ const styles = StyleSheet.create({
     backgroundColor: colors.primary,
     paddingVertical: 10,
     borderRadius: 8,
-    gap: 6,
+    gap: 4,
   },
   callButtonText: {
     color: 'white',
-    fontSize: 14,
+    fontSize: 13,
     fontWeight: '600',
   },
-  // ✅ NOVO - Estilos do botão de Chat
   chatButton: {
     flex: 1,
     flexDirection: 'row',
@@ -572,11 +567,11 @@ const styles = StyleSheet.create({
     backgroundColor: colors.success,
     paddingVertical: 10,
     borderRadius: 8,
-    gap: 6,
+    gap: 4,
   },
   chatButtonText: {
     color: 'white',
-    fontSize: 14,
+    fontSize: 13,
     fontWeight: '600',
   },
   navigateButton: {
@@ -587,11 +582,11 @@ const styles = StyleSheet.create({
     backgroundColor: colors.info,
     paddingVertical: 10,
     borderRadius: 8,
-    gap: 6,
+    gap: 4,
   },
   navigateButtonText: {
     color: 'white',
-    fontSize: 14,
+    fontSize: 13,
     fontWeight: '600',
   },
   itemsCard: {
@@ -643,9 +638,10 @@ const styles = StyleSheet.create({
     height: 1,
     backgroundColor: colors.divider,
   },
+  // ✅ ESPAÇAMENTO AUMENTADO
   actionButtonContainer: {
     marginHorizontal: 20,
-    marginTop: 4,
+    marginTop: 24,
     marginBottom: 20,
   },
   actionButton: {

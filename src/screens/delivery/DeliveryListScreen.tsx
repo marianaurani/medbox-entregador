@@ -1,5 +1,5 @@
 // src/screens/delivery/DeliveryListScreen.tsx
-import React, { useState } from 'react';
+import React, { useState, useMemo } from 'react';
 import {
   View,
   Text,
@@ -36,7 +36,16 @@ const DeliveryListScreen: React.FC = () => {
 
   const availableDeliveries = getAvailableDeliveries();
   const ongoingDeliveries = getOngoingDeliveries();
-  const completedDeliveries = getCompletedDeliveries();
+  const completedDeliveriesRaw = getCompletedDeliveries();
+
+  // ✅ ORDENAÇÃO CORRIGIDA - Do mais recente para o mais antigo
+  const completedDeliveries = useMemo(() => {
+    return [...completedDeliveriesRaw].sort((a, b) => {
+      const dateA = a.deliveredAt ? new Date(a.deliveredAt).getTime() : 0;
+      const dateB = b.deliveredAt ? new Date(b.deliveredAt).getTime() : 0;
+      return dateB - dateA; // Mais recente primeiro
+    });
+  }, [completedDeliveriesRaw]);
 
   const formatCurrency = (value: number) => {
     return `R$ ${value.toFixed(2).replace('.', ',')}`;

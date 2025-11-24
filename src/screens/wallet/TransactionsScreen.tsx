@@ -71,21 +71,20 @@ const TransactionsScreen: React.FC = () => {
     });
   }, [transactions, filterType, filterPeriod]);
 
-  // Estatísticas
+  // ✅ ESTATÍSTICAS CORRIGIDAS
   const stats = useMemo(() => {
     const income = filteredTransactions
-      .filter(t => t.amount > 0)
-      .reduce((sum, t) => sum + t.amount, 0);
+      .filter(t => t.type === 'entrega' || t.type === 'bonus')
+      .reduce((sum, t) => sum + Math.abs(t.amount), 0);
     
-    const outcome = Math.abs(
-      filteredTransactions
-        .filter(t => t.amount < 0)
-        .reduce((sum, t) => sum + t.amount, 0)
-    );
+    const outcome = filteredTransactions
+      .filter(t => t.type === 'saque')
+      .reduce((sum, t) => sum + Math.abs(t.amount), 0);
 
     return { income, outcome, total: income - outcome };
   }, [filteredTransactions]);
 
+  
   const formatCurrency = (value: number) => {
     if (!isBalanceVisible) {
       return 'R$ ••••••';
@@ -179,7 +178,6 @@ const TransactionsScreen: React.FC = () => {
     { period: 'mes' as PeriodType, label: '30 dias', width: 105 },
   ];
 
-  // ✅ NOVO: Navega para detalhes da transação
   const handleTransactionPress = (transactionId: string) => {
     navigation.navigate('TransactionDetails', { transactionId });
   };
@@ -199,48 +197,55 @@ const TransactionsScreen: React.FC = () => {
     return Object.entries(groups).map(([date, items]) => ({ date, items }));
   }, [filteredTransactions]);
 
-  const renderTransaction = ({ item }: any) => (
-    <TouchableOpacity 
-      style={styles.transactionItem}
-      onPress={() => handleTransactionPress(item.id)}
-      activeOpacity={0.7}
-    >
-      <View style={styles.transactionLeft}>
-        <View style={[
-          styles.transactionIcon,
-          { backgroundColor: item.amount > 0 ? colors.medboxLightGreen : colors.backgroundCard }
-        ]}>
-          <Ionicons
-            name={getTransactionIcon(item.type)}
-            size={20}
-            color={item.amount > 0 ? colors.primary : colors.textSecondary}
-          />
-        </View>
-        <View style={styles.transactionInfo}>
-          <Text style={styles.transactionDescription} numberOfLines={2}>
-            {item.description}
-          </Text>
-          <View style={styles.transactionMeta}>
-            <Text style={styles.transactionType}>{getTypeLabel(item.type)}</Text>
-            <Text style={styles.transactionDate}>{formatDate(item.date)}</Text>
+  // ✅ RENDER TRANSACTION CORRIGIDO
+  const renderTransaction = ({ item }: any) => {
+    // ✅ Define se é entrada ou saída baseado no TIPO
+    const isIncome = item.type === 'entrega' || item.type === 'bonus';
+    const displayAmount = Math.abs(item.amount);
+
+    return (
+      <TouchableOpacity 
+        style={styles.transactionItem}
+        onPress={() => handleTransactionPress(item.id)}
+        activeOpacity={0.7}
+      >
+        <View style={styles.transactionLeft}>
+          <View style={[
+            styles.transactionIcon,
+            { backgroundColor: isIncome ? colors.medboxLightGreen : colors.backgroundCard }
+          ]}>
+            <Ionicons
+              name={getTransactionIcon(item.type)}
+              size={20}
+              color={isIncome ? colors.primary : colors.textSecondary}
+            />
+          </View>
+          <View style={styles.transactionInfo}>
+            <Text style={styles.transactionDescription} numberOfLines={2}>
+              {item.description}
+            </Text>
+            <View style={styles.transactionMeta}>
+              <Text style={styles.transactionType}>{getTypeLabel(item.type)}</Text>
+              <Text style={styles.transactionDate}>{formatDate(item.date)}</Text>
+            </View>
           </View>
         </View>
-      </View>
-      <View style={styles.transactionRight}>
-        <Text style={[
-          styles.transactionAmount,
-          { color: item.amount > 0 ? colors.success : colors.error }
-        ]}>
-          {item.amount > 0 ? '+' : ''}{formatCurrency(item.amount)}
-        </Text>
-        <View style={[styles.statusBadge, { backgroundColor: getStatusColor(item.status) }]}>
-          <Text style={styles.statusText}>
-            {item.status === 'concluido' ? 'Concluído' : item.status === 'pendente' ? 'Pendente' : 'Cancelado'}
+        <View style={styles.transactionRight}>
+          <Text style={[
+            styles.transactionAmount,
+            { color: isIncome ? colors.success : colors.error }
+          ]}>
+            {isIncome ? '+' : '-'}{formatCurrency(displayAmount)}
           </Text>
+          <View style={[styles.statusBadge, { backgroundColor: getStatusColor(item.status) }]}>
+            <Text style={styles.statusText}>
+              {item.status === 'concluido' ? 'Concluído' : item.status === 'pendente' ? 'Pendente' : 'Cancelado'}
+            </Text>
+          </View>
         </View>
-      </View>
-    </TouchableOpacity>
-  );
+      </TouchableOpacity>
+    );
+  };
 
   const renderDateGroup = ({ item }: any) => (
     <View style={styles.dateGroup}>

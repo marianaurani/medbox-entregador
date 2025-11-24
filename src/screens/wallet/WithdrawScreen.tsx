@@ -1,4 +1,4 @@
-// src/screens/wallet/WithdrawScreen.tsx (VERSÃO FINAL CORRIGIDA)
+// src/screens/wallet/WithdrawScreen.tsx (NAVEGAÇÃO CORRIGIDA)
 import React, { useState } from 'react';
 import {
   View,
@@ -13,15 +13,24 @@ import {
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
-import { useNavigation } from '@react-navigation/native';
+import { useNavigation, NavigationProp } from '@react-navigation/native';
 import { useWallet } from '../../contexts/WalletContext';
 import { useBank, PixKeyType } from '../../contexts/BankContext';
 import colors from '../../constants/colors';
 
 type WithdrawMethod = 'pix' | 'bank' | 'ted';
 
+// ✅ CORRIGIDO: Tipo de navegação do WalletNavigator
+type WalletNavigationProp = NavigationProp<{
+  WalletHome: undefined;
+  Withdraw: undefined;
+  BankData: undefined;
+  BankAccount: undefined;
+  AddPixKey: { pixKeyId?: string } | undefined;
+}>;
+
 const WithdrawScreen: React.FC = () => {
-  const navigation = useNavigation<any>();
+  const navigation = useNavigation<WalletNavigationProp>();
   const { balance, withdraw } = useWallet();
   const { defaultPixKey, bankAccount } = useBank();
 
@@ -29,7 +38,6 @@ const WithdrawScreen: React.FC = () => {
   const [withdrawMethod, setWithdrawMethod] = useState<WithdrawMethod>('pix');
   const [isSubmitting, setIsSubmitting] = useState(false);
 
-  // ✅ Formata moeda para exibição (sem Math.abs - valores já são positivos aqui)
   const formatCurrency = (value: string | number) => {
     if (typeof value === 'number') {
       return value.toLocaleString('pt-BR', {
@@ -123,10 +131,9 @@ const WithdrawScreen: React.FC = () => {
     return true;
   };
 
+  // ✅ CORRIGIDO: Navega dentro do WalletNavigator
   const handleNavigateToBankData = () => {
-    navigation.navigate('Menu', {
-      screen: 'BankData'
-    });
+    navigation.navigate('BankData');
   };
 
   const validateForm = (): boolean => {

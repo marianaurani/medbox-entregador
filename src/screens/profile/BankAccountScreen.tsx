@@ -111,9 +111,9 @@ const BankAccountScreen: React.FC = () => {
   };
 
   return (
-    <SafeAreaView style={styles.outerContainer} edges={['top']}>
+    <SafeAreaView style={styles.container} edges={['top']}>
       <KeyboardAvoidingView
-        style={styles.container}
+        style={styles.keyboardView}
         behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
       >
         {/* Header */}
@@ -124,11 +124,14 @@ const BankAccountScreen: React.FC = () => {
           >
             <Ionicons name="arrow-back" size={24} color={colors.text} />
           </TouchableOpacity>
-          <Text style={styles.headerTitle}>Dados Bancários</Text>
+          <Text style={styles.headerTitle}>Conta Bancária</Text>
           <View style={{ width: 24 }} />
         </View>
 
-        <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={styles.content}>
+        <ScrollView 
+          showsVerticalScrollIndicator={false} 
+          contentContainerStyle={styles.scrollContent}
+        >
           {/* Banco */}
           <View style={styles.section}>
             <Text style={styles.sectionTitle}>Banco</Text>
@@ -152,16 +155,18 @@ const BankAccountScreen: React.FC = () => {
 
             {showBankList && (
               <View style={styles.bankList}>
-                {BANKS.map((bank) => (
-                  <TouchableOpacity
-                    key={bank.code}
-                    style={styles.bankItem}
-                    onPress={() => handleSelectBank(bank.name, bank.code)}
-                  >
-                    <Text style={styles.bankName}>{bank.name}</Text>
-                    <Text style={styles.bankCode}>{bank.code}</Text>
-                  </TouchableOpacity>
-                ))}
+                <ScrollView style={styles.bankListScroll} nestedScrollEnabled>
+                  {BANKS.map((bank) => (
+                    <TouchableOpacity
+                      key={bank.code}
+                      style={styles.bankItem}
+                      onPress={() => handleSelectBank(bank.name, bank.code)}
+                    >
+                      <Text style={styles.bankName}>{bank.name}</Text>
+                      <Text style={styles.bankCode}>{bank.code}</Text>
+                    </TouchableOpacity>
+                  ))}
+                </ScrollView>
               </View>
             )}
           </View>
@@ -277,11 +282,7 @@ const BankAccountScreen: React.FC = () => {
             </View>
           </View>
 
-          <View style={{ height: 100 }} />
-        </ScrollView>
-
-        {/* Botão Salvar */}
-        <View style={styles.bottomContainer}>
+          {/* Botão Salvar (agora dentro do ScrollView) */}
           <TouchableOpacity
             style={[styles.saveButton, isSubmitting && styles.saveButtonDisabled]}
             onPress={handleSave}
@@ -292,26 +293,28 @@ const BankAccountScreen: React.FC = () => {
               {isSubmitting ? 'Salvando...' : 'Salvar Dados'}
             </Text>
           </TouchableOpacity>
-        </View>
+
+          <View style={{ height: 40 }} />
+        </ScrollView>
       </KeyboardAvoidingView>
     </SafeAreaView>
   );
 };
 
 const styles = StyleSheet.create({
-  outerContainer: {
-    flex: 1,
-    backgroundColor: colors.background,
-  },
   container: {
     flex: 1,
     backgroundColor: colors.background,
+  },
+  keyboardView: {
+    flex: 1,
   },
   header: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
     paddingHorizontal: 20,
+    paddingTop: 15,
     paddingBottom: 15,
     backgroundColor: colors.backgroundLight,
     borderBottomWidth: 1,
@@ -322,7 +325,7 @@ const styles = StyleSheet.create({
     fontWeight: 'bold',
     color: colors.text,
   },
-  content: {
+  scrollContent: {
     padding: 20,
   },
   section: {
@@ -359,6 +362,10 @@ const styles = StyleSheet.create({
     borderColor: colors.border,
     borderRadius: 12,
     marginTop: 8,
+    maxHeight: 200,
+    overflow: 'hidden',
+  },
+  bankListScroll: {
     maxHeight: 200,
   },
   bankItem: {
@@ -438,6 +445,7 @@ const styles = StyleSheet.create({
     padding: 16,
     borderRadius: 12,
     gap: 12,
+    marginBottom: 24,
   },
   infoContent: {
     flex: 1,
@@ -447,22 +455,6 @@ const styles = StyleSheet.create({
     color: colors.textSecondary,
     lineHeight: 18,
   },
-  bottomContainer: {
-    position: 'absolute',
-    bottom: 0,
-    left: 0,
-    right: 0,
-    backgroundColor: colors.backgroundLight,
-    padding: 20,
-    paddingBottom: 30,
-    borderTopWidth: 1,
-    borderTopColor: colors.border,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: -2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 4,
-    elevation: 5,
-  },
   saveButton: {
     flexDirection: 'row',
     backgroundColor: colors.primary,
@@ -471,6 +463,11 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     gap: 10,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+    elevation: 3,
   },
   saveButtonDisabled: {
     opacity: 0.6,

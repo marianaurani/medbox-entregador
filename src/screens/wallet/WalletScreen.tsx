@@ -1,5 +1,5 @@
-// src/screens/wallet/WalletScreen.tsx (CORRIGIDO - Formatação consistente)
-import React from 'react';
+// src/screens/wallet/WalletScreen.tsx (VERSÃO CORRIGIDA)
+import React, { useEffect } from 'react';
 import {
   Text,
   StyleSheet,
@@ -7,6 +7,7 @@ import {
   ScrollView,
   FlatList,
   View,
+  Alert,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
@@ -26,12 +27,43 @@ const WalletScreen: React.FC = () => {
   
   const recentTransactions = transactions.slice(0, 5);
 
-  // ✅ CORREÇÃO: Função de formatação sem Math.abs()
+  // ✅ DEBUG: Força verificação quando a tela é aberta
+  useEffect(() => {
+    console.log('🔄 WalletScreen montada - Verificando saldo...');
+    console.log('💰 Saldo atual:', balance.available);
+    console.log('📋 Total de transações:', transactions.length);
+    
+    // Calcula manualmente para comparar
+    const totalEarnings = transactions
+      .filter(t => t.type === 'entrega' && t.status === 'concluido')
+      .reduce((sum, t) => sum + t.amount, 0);
+    
+    const totalWithdrawn = transactions
+      .filter(t => t.type === 'saque' && t.status === 'concluido')
+      .reduce((sum, t) => sum + Math.abs(t.amount), 0);
+    
+    const calculatedBalance = totalEarnings - totalWithdrawn;
+    
+    console.log('🧮 Saldo calculado manualmente:', calculatedBalance);
+    console.log('📊 Total ganho:', totalEarnings);
+    console.log('💸 Total sacado:', totalWithdrawn);
+    console.log('📋 Transações de entrega:', transactions.filter(t => t.type === 'entrega').length);
+    console.log('💳 Transações de saque:', transactions.filter(t => t.type === 'saque').length);
+    
+    if (Math.abs(balance.available - calculatedBalance) > 0.01) {
+      console.log('⚠️ SALDO DESATUALIZADO!');
+      console.log('   Deveria ser:', calculatedBalance);
+      console.log('   Está mostrando:', balance.available);
+      console.log('   Diferença:', calculatedBalance - balance.available);
+    } else {
+      console.log('✅ Saldo está correto!');
+    }
+  }, [balance, transactions]);
+
   const formatCurrency = (value: number) => {
     if (!isBalanceVisible) {
       return 'R$ ••••••';
     }
-    // Garante que valores positivos sejam exibidos corretamente
     return `R$ ${value.toLocaleString('pt-BR', {
       minimumFractionDigits: 2,
       maximumFractionDigits: 2,
@@ -96,45 +128,75 @@ const WalletScreen: React.FC = () => {
     navigation.navigate('TransactionDetails', { transactionId });
   };
 
-  const renderTransaction = ({ item }: any) => (
-    <TouchableOpacity 
-      style={styles.transactionItem}
-      onPress={() => handleTransactionPress(item.id)}
-      activeOpacity={0.7}
-    >
-      <View style={styles.transactionLeft}>
-        <View style={[
-          styles.transactionIcon,
-          { backgroundColor: item.amount > 0 ? colors.medboxLightGreen : colors.backgroundCard }
-        ]}>
-          <Ionicons
-            name={getTransactionIcon(item.type)}
-            size={20}
-            color={item.amount > 0 ? colors.primary : colors.textSecondary}
-          />
+  // ✅ BOTÃO DE RECALCULAR SALDO (NÃO APAGA NADA)
+  const handleRecalculateBalance = async () => {
+    Alert.alert(
+      'Recalcular Saldo',
+      'Isso irá forçar o recálculo do saldo com base nas transações existentes. Nenhuma transação será apagada.',
+      [
+        {
+          text: 'Cancelar',
+          style: 'cancel',
+        },
+        {
+          text: 'Recalcular',
+          onPress: async () => {
+            console.log('🔄 Recalculando saldo...');
+            if (resetWallet) {
+              await resetWallet();
+              Alert.alert('✅ Sucesso', 'Saldo recalculado com sucesso!');
+            }
+          },
+        },
+      ]
+    );
+  };
+
+  const renderTransaction = ({ item }: any) => {
+    // ✅ Define se é entrada ou saída baseado no TIPO
+    const isIncome = item.type === 'entrega' || item.type === 'bonus';
+    const displayAmount = Math.abs(item.amount);
+
+    return (
+      <TouchableOpacity 
+        style={styles.transactionItem}
+        onPress={() => handleTransactionPress(item.id)}
+        activeOpacity={0.7}
+      >
+        <View style={styles.transactionLeft}>
+          <View style={[
+            styles.transactionIcon,
+            { backgroundColor: isIncome ? colors.medboxLightGreen : colors.backgroundCard }
+          ]}>
+            <Ionicons
+              name={getTransactionIcon(item.type)}
+              size={20}
+              color={isIncome ? colors.primary : colors.textSecondary}
+            />
+          </View>
+          <View style={styles.transactionInfo}>
+            <Text style={styles.transactionDescription} numberOfLines={1}>
+              {item.description}
+            </Text>
+            <Text style={styles.transactionDate}>{formatDate(item.date)}</Text>
+          </View>
         </View>
-        <View style={styles.transactionInfo}>
-          <Text style={styles.transactionDescription} numberOfLines={1}>
-            {item.description}
+        <View style={styles.transactionRight}>
+          <Text style={[
+            styles.transactionAmount,
+            { color: isIncome ? colors.success : colors.error }
+          ]}>
+            {isIncome ? '+' : '-'}{formatCurrency(displayAmount)}
           </Text>
-          <Text style={styles.transactionDate}>{formatDate(item.date)}</Text>
+          <View style={[styles.statusBadge, { backgroundColor: getStatusColor(item.status) }]}>
+            <Text style={styles.statusText}>
+              {item.status === 'concluido' ? 'Concluído' : item.status === 'pendente' ? 'Pendente' : 'Cancelado'}
+            </Text>
+          </View>
         </View>
-      </View>
-      <View style={styles.transactionRight}>
-        <Text style={[
-          styles.transactionAmount,
-          { color: item.amount > 0 ? colors.success : colors.error }
-        ]}>
-          {item.amount > 0 ? '+' : ''}{formatCurrency(Math.abs(item.amount))}
-        </Text>
-        <View style={[styles.statusBadge, { backgroundColor: getStatusColor(item.status) }]}>
-          <Text style={styles.statusText}>
-            {item.status === 'concluido' ? 'Concluído' : item.status === 'pendente' ? 'Pendente' : 'Cancelado'}
-          </Text>
-        </View>
-      </View>
-    </TouchableOpacity>
-  );
+      </TouchableOpacity>
+    );
+  };
 
   return (
     <SafeAreaView style={styles.container} edges={['top']}>
@@ -142,15 +204,17 @@ const WalletScreen: React.FC = () => {
       <View style={styles.header}>
         <Text style={styles.headerTitle}>Carteira</Text>
         <View style={{ flexDirection: 'row', gap: 12 }}>
-          <TouchableOpacity onPress={async () => {
-            if (resetWallet) {
-              await resetWallet();
-              alert('Carteira resetada! Saldo recalculado.');
-            }
-          }}>
-            <Ionicons name="refresh-outline" size={24} color={colors.primary} />
+          {/* ✅ BOTÃO RECALCULAR (NÃO APAGA TRANSAÇÕES) */}
+          <TouchableOpacity 
+            onPress={handleRecalculateBalance}
+            hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
+          >
+            <Ionicons name="calculator-outline" size={24} color={colors.primary} />
           </TouchableOpacity>
-          <TouchableOpacity onPress={handleSettings}>
+          <TouchableOpacity 
+            onPress={handleSettings}
+            hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
+          >
             <Ionicons name="settings-outline" size={24} color={colors.text} />
           </TouchableOpacity>
         </View>
@@ -179,9 +243,18 @@ const WalletScreen: React.FC = () => {
           </View>
 
           {/* Botão de Saque */}
-          <TouchableOpacity style={styles.withdrawButton} onPress={handleWithdraw}>
+          <TouchableOpacity 
+            style={[
+              styles.withdrawButton,
+              balance.available < 10 && styles.withdrawButtonDisabled
+            ]} 
+            onPress={handleWithdraw}
+            disabled={balance.available < 10}
+          >
             <Ionicons name="arrow-up-circle-outline" size={20} color="white" />
-            <Text style={styles.withdrawButtonText}>Sacar</Text>
+            <Text style={styles.withdrawButtonText}>
+              {balance.available < 10 ? 'Saldo mínimo R$ 10,00' : 'Sacar'}
+            </Text>
           </TouchableOpacity>
         </View>
 
@@ -302,6 +375,10 @@ const styles = StyleSheet.create({
     paddingVertical: 12,
     borderRadius: 8,
     gap: 8,
+  },
+  withdrawButtonDisabled: {
+    backgroundColor: 'rgba(255, 255, 255, 0.1)',
+    opacity: 0.6,
   },
   withdrawButtonText: {
     color: 'white',
